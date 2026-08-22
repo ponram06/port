@@ -1,3 +1,21 @@
+// ─── Smooth Scroll: Lenis + GSAP Ticker Sync ───────────────────────────────
+// Lenis drives all scroll momentum; GSAP's ticker calls lenis.raf() each frame
+// so ScrollTrigger reads Lenis positions, not native scroll positions.
+const lenis = new Lenis({
+  duration: 1.2,
+  easing: (t) => 1 - Math.pow(1 - t, 3), // cubic ease-out — matches reference feel
+  smooth: true,
+});
+
+lenis.on('scroll', ScrollTrigger.update);
+
+gsap.ticker.add((time) => {
+  lenis.raf(time * 1000);
+});
+
+gsap.ticker.lagSmoothing(0); // prevent GSAP from throttling RAF on slow frames
+// ────────────────────────────────────────────────────────────────────────────
+
 // Custom Cursor
 const cursor = document.querySelector('.cursor');
 const follower = document.querySelector('.cursor-follower');
@@ -124,25 +142,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2200);
   }
 
-  // Split hero title text for staggered animation
-  const heroTitle = document.querySelector('.hero-title');
-  if(heroTitle) {
-    const text = heroTitle.textContent;
-    heroTitle.innerHTML = '';
-    text.split('').forEach(char => {
-      const span = document.createElement('span');
-      span.textContent = char === ' ' ? '\u00A0' : char;
-      span.style.display = 'inline-block';
-      heroTitle.appendChild(span);
+  // ─── Reusable Masked Text Reveal (SplitType) ──────────────────────────────
+  // type:   'chars' | 'lines' (what SplitType splits on)
+  // trigger: 'load'  → plays immediately (with optional delay)
+  //          'scroll'→ plays when element enters viewport
+  // All other options map directly to GSAP tween params.
+  function revealText(target, { type = 'lines', trigger = 'scroll', delay = 0, duration = 0.9, stagger = 0.08, ease = 'power4.out' } = {}) {
+    const elements = typeof target === 'string' ? document.querySelectorAll(target) : [target];
+    elements.forEach((el) => {
+      if (!el) return;
+      const split = new SplitType(el, { types: type });
+      const items = type === 'chars' ? split.chars : split.lines;
+
+      const tweenVars = {
+        yPercent: type === 'chars' ? 120 : 100,
+        opacity: type === 'chars' ? 1 : 0,
+        stagger,
+        duration,
+        ease,
+        delay: trigger === 'load' ? delay : 0,
+      };
+
+      if (trigger === 'scroll') {
+        tweenVars.scrollTrigger = {
+          trigger: el,
+          start: 'top 85%',
+        };
+      }
+
+      gsap.from(items, tweenVars);
     });
   }
+  // ──────────────────────────────────────────────────────────────────────────
 
   // Hero Animation
   gsap.from(".hero-subtitle", { y: 20, opacity: 0, duration: 1, delay: 2.3, ease: "power3.out" });
-  gsap.from(".hero-title span", {
-    y: 100, opacity: 0, duration: 1.2,
-    stagger: 0.15, delay: 2.5, ease: "power4.out"
-  });
+  // Hero title: char-masked reveal — same 2.5s delay as original so loader sequence is preserved
+  revealText('.hero-title', { type: 'chars', trigger: 'load', delay: 2.5, duration: 1.2, stagger: 0.05 });
   gsap.from(".hero-desc", { y: 20, opacity: 0, duration: 1, delay: 3, ease: "power3.out" });
   gsap.from(".profile-frame", { x: 80, opacity: 0, duration: 1.2, delay: 2.8, ease: "power3.out" });
   gsap.from(".scroll-indicator", { opacity: 0, duration: 1, delay: 3.5 });
@@ -167,6 +203,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     );
+  });
+
+  // Scroll-triggered masked line reveals for .reveal-text elements
+  // Uses the reusable revealText() utility defined above
+  document.querySelectorAll('.reveal-text').forEach((el) => {
+    revealText(el, { type: 'lines', trigger: 'scroll' });
   });
 
   // Animated Counter for Stats
@@ -233,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
     backToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lenis.scrollTo(0); // use Lenis instead of native scroll so inertia easing applies
     });
   }
 

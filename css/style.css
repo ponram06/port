@@ -547,6 +547,20 @@ nav {
   100% { transform: translate(-50%, -50%) scale(3); opacity: 0; border-width: 0px; }
 }
 
+/* ===== MASKED TEXT REVEAL (SplitType) ===== */
+/* .line wrappers created by SplitType need overflow:hidden so the
+   translateY animation is clipped — text emerges from below the line
+   baseline rather than floating up through adjacent content.           */
+.reveal-text .line {
+  overflow: hidden;
+  display: block;
+}
+/* Hero title chars animate up from below — clip at the title boundary */
+.hero-title {
+  overflow: hidden;
+}
+/* =========================================== */
+
 /* ===== RESPONSIVE ===== */
 
 /* Tablet */
