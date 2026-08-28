@@ -638,6 +638,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const mm = gsap.matchMedia();
 
     mm.add('(min-width: 769px)', () => {
+      const track = gallerySection.querySelector('.floating-mockup-track');
       const itemBl = gallerySection.querySelector('.item-bl');
       const itemTl = gallerySection.querySelector('.item-tl');
       const itemTc = gallerySection.querySelector('.item-tc');
@@ -646,84 +647,79 @@ document.addEventListener("DOMContentLoaded", () => {
       const itemBc = gallerySection.querySelector('.item-bc');
       const statement = gallerySection.querySelector('.gallery-statement');
 
+      // Set initial hidden/fly-in states
+      if (itemBl) gsap.set(itemBl, { opacity: 0, scale: 0.6, x: -140, y: 120, rotateY: 28, rotateX: 12 });
+      if (itemTl) gsap.set(itemTl, { opacity: 0, scale: 0.6, x: -140, y: -120, rotateY: 32, rotateX: -12 });
+      if (itemTc) gsap.set(itemTc, { opacity: 0, scale: 0.6, y: -150, rotateX: 20 });
+      if (itemTr) gsap.set(itemTr, { opacity: 0, scale: 0.6, x: 140, y: -120, rotateY: -32, rotateX: -12 });
+      if (itemBr) gsap.set(itemBr, { opacity: 0, scale: 0.6, x: 140, y: 120, rotateY: -28, rotateX: 12 });
+      if (itemBc) gsap.set(itemBc, { opacity: 0, scale: 0.6, y: 150, rotateX: -18 });
+
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: gallerySection,
           start: 'top top',
-          end: '+=250%',
-          scrub: 1.2,
+          end: '+=350%',
+          scrub: 1.4,
           pin: true,
           anticipatePin: 1,
         },
       });
 
-      // Simultaneous vertical & sideways drift
+      // ── Phase 1: Projects Fly In One by One As You Scroll ──
+      // Card 1 (Bottom Left)
       if (itemBl) {
-        tl.to(itemBl, {
-          xPercent: -75,
-          yPercent: -45,
-          rotateY: 32,
-          rotateZ: -6,
-          ease: 'none',
-        }, 0);
+        tl.to(itemBl, { opacity: 1, scale: 1, x: 0, y: 0, rotateY: 18, rotateX: 8, duration: 1, ease: 'power2.out' }, 0);
       }
 
+      // Card 2 (Top Left)
       if (itemTl) {
-        tl.to(itemTl, {
-          xPercent: -90,
-          yPercent: -60,
-          rotateY: 38,
-          rotateZ: -10,
-          ease: 'none',
-        }, 0);
+        tl.to(itemTl, { opacity: 1, scale: 1, x: 0, y: 0, rotateY: 24, rotateX: -8, duration: 1, ease: 'power2.out' }, 0.6);
       }
 
+      // Card 3 (Top Center)
       if (itemTc) {
-        tl.to(itemTc, {
-          xPercent: 35,
-          yPercent: -130,
-          rotateX: 30,
-          ease: 'none',
-        }, 0);
+        tl.to(itemTc, { opacity: 1, scale: 1, y: 0, rotateX: 14, duration: 1, ease: 'power2.out' }, 1.2);
       }
 
+      // Card 4 (Top Right)
       if (itemTr) {
-        tl.to(itemTr, {
-          xPercent: 85,
-          yPercent: -70,
-          rotateY: -35,
-          rotateZ: 8,
-          ease: 'none',
-        }, 0);
+        tl.to(itemTr, { opacity: 1, scale: 1, x: 0, y: 0, rotateY: -22, rotateX: -8, duration: 1, ease: 'power2.out' }, 1.8);
       }
 
+      // Card 5 (Bottom Right)
       if (itemBr) {
-        tl.to(itemBr, {
-          xPercent: 80,
-          yPercent: -50,
-          rotateY: -30,
-          rotateZ: 6,
-          ease: 'none',
-        }, 0);
+        tl.to(itemBr, { opacity: 1, scale: 1, x: 0, y: 0, rotateY: -18, rotateX: 8, duration: 1, ease: 'power2.out' }, 2.4);
       }
 
+      // Card 6 (Bottom Center)
       if (itemBc) {
-        tl.to(itemBc, {
-          xPercent: -40,
-          yPercent: 120,
-          rotateX: -26,
-          ease: 'none',
-        }, 0);
+        tl.to(itemBc, { opacity: 1, scale: 1, y: 0, rotateX: -12, duration: 1, ease: 'power2.out' }, 3.0);
       }
 
+      // Subtle scale on statement
       if (statement) {
-        tl.fromTo(
-          statement,
-          { scale: 0.95, opacity: 0.85 },
-          { scale: 1.05, opacity: 1, ease: 'none' },
-          0
-        );
+        tl.to(statement, { scale: 1.05, duration: 3.5, ease: 'none' }, 0);
       }
+
+      // ── Phase 2: All Projects Orbit & Swirl Anticlockwise and Exit ──
+      const swirlStart = 3.8;
+
+      if (track) {
+        tl.to(track, {
+          rotation: -28,
+          scale: 1.15,
+          duration: 2.2,
+          ease: 'power1.inOut',
+        }, swirlStart);
+      }
+
+      if (itemBl) tl.to(itemBl, { xPercent: -50, yPercent: 40, rotateY: 40, opacity: 0.35, duration: 2.2, ease: 'power1.inOut' }, swirlStart);
+      if (itemTl) tl.to(itemTl, { xPercent: -60, yPercent: -40, rotateY: 45, opacity: 0.35, duration: 2.2, ease: 'power1.inOut' }, swirlStart);
+      if (itemTc) tl.to(itemTc, { xPercent: -40, yPercent: -60, rotateX: 30, opacity: 0.35, duration: 2.2, ease: 'power1.inOut' }, swirlStart);
+      if (itemTr) tl.to(itemTr, { xPercent: 50, yPercent: -50, rotateY: -45, opacity: 0.35, duration: 2.2, ease: 'power1.inOut' }, swirlStart);
+      if (itemBr) tl.to(itemBr, { xPercent: 60, yPercent: 40, rotateY: -40, opacity: 0.35, duration: 2.2, ease: 'power1.inOut' }, swirlStart);
+      if (itemBc) tl.to(itemBc, { xPercent: 40, yPercent: 60, rotateX: -30, opacity: 0.35, duration: 2.2, ease: 'power1.inOut' }, swirlStart);
     });
   }
 
