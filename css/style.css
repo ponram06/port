@@ -540,86 +540,36 @@ nav {
 /* Floating Mockup Item */
 .floating-mockup-item {
   position: absolute;
-  will-change: transform, opacity, filter;
+  width: clamp(260px, 24vw, 380px);
+  will-change: transform, opacity;
   pointer-events: auto;
   cursor: pointer;
   transform-style: preserve-3d;
   opacity: 0;
 }
 
-/* Perimeter Coordinates cleanly surrounding the center statement */
-.item-bl {
-  left: 4%;
-  bottom: 6%;
-  width: clamp(240px, 20vw, 320px);
-  z-index: 15;
-}
-
-.item-tl {
-  left: 4%;
-  top: 7%;
-  width: clamp(230px, 18vw, 290px);
-  z-index: 8;
-}
-
-.item-tc {
-  left: 50%;
-  top: 4%;
-  width: clamp(230px, 18vw, 290px);
-  margin-left: clamp(-145px, -9vw, -115px);
-  z-index: 6;
-}
-
-.item-tr {
-  right: 4%;
-  top: 7%;
-  width: clamp(230px, 18vw, 290px);
-  z-index: 7;
-}
-
-.item-br {
-  right: 4%;
-  bottom: 6%;
-  width: clamp(240px, 20vw, 320px);
-  z-index: 16;
-}
-
-.item-bc {
-  left: 50%;
-  bottom: 3%;
-  width: clamp(230px, 18vw, 290px);
-  margin-left: clamp(-145px, -9vw, -115px);
-  z-index: 12;
-}
-
-/* 3D Card Construction */
-.mockup-3d-card {
+/* Clean Borderless 3D Screen Wrap (Luke Baffait Style) */
+.mockup-screen-wrap {
   position: relative;
-  border-radius: 16px;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
   overflow: hidden;
-  background: #0d0f14;
+  background: #08090c;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 0, 0, 0.6);
   transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1),
               border-color 0.4s ease,
               box-shadow 0.4s ease;
 }
 
-.floating-mockup-item:hover .mockup-3d-card {
-  transform: scale(1.05) translateZ(30px);
+.floating-mockup-item:hover .mockup-screen-wrap {
+  transform: scale(1.05);
   border-color: var(--accent);
-  box-shadow: 0 35px 70px rgba(0, 0, 0, 0.95), 0 0 30px var(--accent-glow);
+  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.95), 0 0 30px var(--accent-glow);
 }
 
-.mockup-frame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  background: #08090c;
-}
-
-.mockup-frame img {
+.mockup-screen-wrap img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -628,46 +578,16 @@ nav {
   transition: transform 0.6s ease, filter 0.4s ease;
 }
 
-.floating-mockup-item:hover .mockup-frame img {
+.floating-mockup-item:hover .mockup-screen-wrap img {
   transform: scale(1.04);
-  filter: contrast(1.15) brightness(1.05);
+  filter: contrast(1.18) brightness(1.05);
 }
 
 .mockup-glare {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, transparent 60%);
   pointer-events: none;
-}
-
-/* Floating Caption */
-.mockup-caption {
-  padding: 14px 18px;
-  background: rgba(13, 15, 20, 0.94);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-}
-
-.caption-tag {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 0.65rem;
-  color: var(--accent);
-  letter-spacing: 2px;
-  margin-bottom: 4px;
-}
-
-.mockup-caption h4 {
-  font-family: var(--font-main);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  transition: color 0.3s ease;
-}
-
-.floating-mockup-item:hover .mockup-caption h4 {
-  color: var(--accent);
 }
 
 @media (max-width: 768px) {

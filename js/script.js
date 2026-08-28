@@ -638,36 +638,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const mm = gsap.matchMedia();
 
     mm.add('(min-width: 769px)', () => {
-      const track = gallerySection.querySelector('.floating-mockup-track');
-      const itemBl = gallerySection.querySelector('.item-bl');
-      const itemTl = gallerySection.querySelector('.item-tl');
-      const itemTc = gallerySection.querySelector('.item-tc');
-      const itemTr = gallerySection.querySelector('.item-tr');
-      const itemBr = gallerySection.querySelector('.item-br');
-      const itemBc = gallerySection.querySelector('.item-bc');
+      const items = gallerySection.querySelectorAll('.floating-mockup-item');
       const statement = gallerySection.querySelector('.gallery-statement');
 
-      // Initial state: hidden off-stage
-      if (statement) gsap.set(statement, { opacity: 0, y: 35, scale: 0.92 });
-      if (itemBl) gsap.set(itemBl, { opacity: 0, scale: 0.5, x: -160, y: 140, rotateY: 28, rotateX: 12 });
-      if (itemTl) gsap.set(itemTl, { opacity: 0, scale: 0.5, x: -160, y: -140, rotateY: 32, rotateX: -12 });
-      if (itemTc) gsap.set(itemTc, { opacity: 0, scale: 0.5, y: -160, rotateX: 20 });
-      if (itemTr) gsap.set(itemTr, { opacity: 0, scale: 0.5, x: 160, y: -140, rotateY: -32, rotateX: -12 });
-      if (itemBr) gsap.set(itemBr, { opacity: 0, scale: 0.5, x: 160, y: 140, rotateY: -28, rotateX: 12 });
-      if (itemBc) gsap.set(itemBc, { opacity: 0, scale: 0.5, y: 160, rotateX: -18 });
+      if (!items.length) return;
+
+      // Waypoints along the anticlockwise 3D orbit (Right/Bottom -> Top -> Left/Bottom)
+      const waypoints = [
+        { xPercent: 95,  yPercent: 44,  rotateY: -32, rotateX: 10,  scale: 0.65, opacity: 0 },
+        { xPercent: 54,  yPercent: 26,  rotateY: -22, rotateX: 8,   scale: 1.05, opacity: 1 },
+        { xPercent: 62,  yPercent: -4,  rotateY: -26, rotateX: 0,   scale: 0.95, opacity: 1 },
+        { xPercent: 38,  yPercent: -34, rotateY: -18, rotateX: -10, scale: 0.82, opacity: 1 },
+        { xPercent: 0,   yPercent: -42, rotateY: 0,   rotateX: -14, scale: 0.78, opacity: 1 },
+        { xPercent: -38, yPercent: -34, rotateY: 18,  rotateX: -10, scale: 0.82, opacity: 1 },
+        { xPercent: -62, yPercent: -4,  rotateY: 26,  rotateX: 0,   scale: 0.95, opacity: 1 },
+        { xPercent: -54, yPercent: 26,  rotateY: 22,  rotateX: 8,   scale: 1.05, opacity: 1 },
+        { xPercent: -95, yPercent: 44,  rotateY: 32,  rotateX: 10,  scale: 0.65, opacity: 0 },
+      ];
+
+      // Initial state: hidden offscreen
+      items.forEach((item) => {
+        gsap.set(item, {
+          xPercent: waypoints[0].xPercent,
+          yPercent: waypoints[0].yPercent,
+          rotateY: waypoints[0].rotateY,
+          rotateX: waypoints[0].rotateX,
+          scale: waypoints[0].scale,
+          opacity: 0,
+        });
+      });
+
+      if (statement) {
+        gsap.set(statement, { opacity: 0, y: 35, scale: 0.92 });
+      }
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: gallerySection,
           start: 'top top',
-          end: '+=420%',
-          scrub: 1.3,
+          end: '+=500%',
+          scrub: 1.4,
           pin: true,
           anticipatePin: 1,
         },
       });
 
-      // ── Step 1: Text comes first ──
+      // ── Step 1: Center statement appears first ──
       if (statement) {
         tl.to(statement, {
           opacity: 1,
@@ -678,128 +694,45 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 0);
       }
 
-      // ── Step 2: The first project comes in ──
-      if (itemBl) {
-        tl.to(itemBl, {
-          opacity: 1,
-          scale: 1,
-          x: 0,
-          y: 0,
-          rotateY: 18,
-          rotateX: 8,
-          duration: 1.0,
-          ease: 'power2.out',
-        }, 1.0);
-      }
+      // ── Step 2 & 3: One by one each project enters and follows along the anticlockwise curve ──
+      const staggerDelay = 0.9;
+      const legDuration = 0.65;
 
-      // ── Step 3: For each scroll, one by one project comes and joins behind/around another ──
-      // Project 2
-      if (itemTl) {
-        tl.to(itemTl, {
-          opacity: 1,
-          scale: 1,
-          x: 0,
-          y: 0,
-          rotateY: 24,
-          rotateX: -8,
-          duration: 1.0,
-          ease: 'power2.out',
-        }, 1.9);
-      }
+      items.forEach((item, idx) => {
+        const itemStartTime = 0.9 + idx * staggerDelay;
 
-      // Project 3
-      if (itemTc) {
-        tl.to(itemTc, {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          rotateX: 14,
-          duration: 1.0,
-          ease: 'power2.out',
-        }, 2.8);
-      }
-
-      // Project 4
-      if (itemTr) {
-        tl.to(itemTr, {
-          opacity: 1,
-          scale: 1,
-          x: 0,
-          y: 0,
-          rotateY: -22,
-          rotateX: -8,
-          duration: 1.0,
-          ease: 'power2.out',
-        }, 3.7);
-      }
-
-      // Project 5
-      if (itemBr) {
-        tl.to(itemBr, {
-          opacity: 1,
-          scale: 1,
-          x: 0,
-          y: 0,
-          rotateY: -18,
-          rotateX: 8,
-          duration: 1.0,
-          ease: 'power2.out',
-        }, 4.6);
-      }
-
-      // Project 6
-      if (itemBc) {
-        tl.to(itemBc, {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          rotateX: -12,
-          duration: 1.0,
-          ease: 'power2.out',
-        }, 5.5);
-      }
-
-      // ── Step 4: Text in middle gets animation styling when all assemble ──
-      if (statement) {
-        tl.to(statement, {
-          scale: 1.06,
-          duration: 0.8,
-          ease: 'power1.inOut',
-        }, 6.2);
-      }
-
-      // ── Step 5: When scrolling to next section, projects move in anticlockwise direction and disappear ──
-      const exitTime = 7.0;
-
-      if (track) {
-        tl.to(track, {
-          rotation: -45,
-          scale: 1.25,
-          duration: 2.2,
-          ease: 'power1.inOut',
-        }, exitTime);
-      }
-
-      const allItems = [itemBl, itemTl, itemTc, itemTr, itemBr, itemBc].filter(Boolean);
-      allItems.forEach((item) => {
-        tl.to(item, {
-          opacity: 0,
-          scale: 0.6,
-          filter: 'blur(8px)',
-          duration: 1.8,
-          ease: 'power2.in',
-        }, exitTime + 0.2);
+        // Traverse through the anticlockwise waypoints
+        waypoints.forEach((wp, wpIdx) => {
+          if (wpIdx === 0) return;
+          tl.to(item, {
+            xPercent: wp.xPercent,
+            yPercent: wp.yPercent,
+            rotateY: wp.rotateY,
+            rotateX: wp.rotateX,
+            scale: wp.scale,
+            opacity: wp.opacity,
+            duration: legDuration,
+            ease: 'none',
+          }, itemStartTime + (wpIdx - 1) * legDuration);
+        });
       });
 
+      // Subtle pulse and glow on center statement
       if (statement) {
+        tl.to(statement, {
+          scale: 1.05,
+          duration: 2.0,
+          ease: 'sine.inOut',
+        }, 3.0);
+
+        // Statement fades out as last cards exit towards next section
         tl.to(statement, {
           opacity: 0,
           y: -40,
           scale: 1.1,
-          filter: 'blur(6px)',
-          duration: 1.6,
+          duration: 1.5,
           ease: 'power2.in',
-        }, exitTime + 0.3);
+        }, 0.9 + items.length * staggerDelay + 1.2);
       }
     });
   }
