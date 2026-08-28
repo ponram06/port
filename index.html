@@ -73,7 +73,7 @@
       
       <!-- Hero Section -->
       <section id="Intro" class="hero section hero-section">
-        <div class="container gs-reveal">
+        <div class="container">
           <div class="hero-layout">
             <div class="hero-left">
               <p class="hero-subtitle">COMPUTER SCIENCE ENGINEERING</p>
@@ -89,7 +89,7 @@
             </div>
           </div>
         </div>
-        <div class="scroll-indicator gs-reveal">
+        <div class="scroll-indicator">
           <span>SCROLL</span>
           <div class="line"></div>
         </div>
@@ -211,50 +211,113 @@
         </div>
       </section>
 
+      <!-- 3D Interactive Scene Section -->
+      <section id="Scene3D" class="scene-3d-section">
+        <canvas id="webgl-canvas"></canvas>
+        <div class="scene-3d-overlay">
+          <span class="scene-subtitle">DIGITAL DIMENSIONS</span>
+          <h2 class="scene-heading">Sculpting logic into <span class="highlight-serif">seamless interactive</span> experiences.</h2>
+        </div>
+        
+        <!-- Curved SVG Wave Divider -->
+        <div class="scene-wave-divider" aria-hidden="true">
+          <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+            <path d="M0,32L60,42.7C120,53,240,75,360,74.7C480,75,600,53,720,48C840,43,960,53,1080,64C1200,75,1320,85,1380,90.7L1440,96L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z" fill="#050505"></path>
+          </svg>
+        </div>
+      </section>
+
       <!-- Projects Section -->
       <section id="Projects" class="projects section compact-section">
         <div class="container">
-          <h2 class="massive-title gs-reveal" style="margin-bottom: 50px;">SELECTED<br>WORKS</h2>
+          <div class="projects-header gs-reveal">
+            <span class="meta" style="font-family: var(--font-display); font-size: 0.8rem; color: var(--accent); letter-spacing: 3px; margin-bottom: 12px; display: block;">PORTFOLIO</span>
+            <h2 class="massive-title" style="margin-bottom: 50px;">SELECTED<br>WORKS</h2>
+          </div>
           
-          <div class="project-list">
-            <div class="project-row gs-reveal">
-              <div class="project-title-wrapper">
-                <h3>Smart Web Pentesting</h3>
-                <p>AI Automated Security Scanner. A cybersecurity tool designed to detect and analyze web vulnerabilities using AI. Features a modern UI, customizable scans, and PDF reports.</p>
+          <div class="project-parallax-grid">
+            <!-- Column 1 -->
+            <div class="parallax-column col-1">
+              <!-- Project 01 -->
+              <div class="project-card gs-reveal">
+                <div class="project-thumb">
+                  <!-- Swap this image URL with your real project screenshot -->
+                  <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop" alt="Smart Web Pentesting">
+                  <div class="thumb-overlay"></div>
+                  <span class="project-badge">CYBERSECURITY / PYTHON</span>
+                </div>
+                <div class="project-card-body">
+                  <span class="project-num">01</span>
+                  <h3 class="project-card-title">Smart Web Pentesting</h3>
+                  <p class="project-card-desc">AI Automated Security Scanner. A cybersecurity tool designed to detect and analyze web vulnerabilities using AI. Features a modern UI, customizable scans, and PDF reports.</p>
+                </div>
               </div>
-              <div class="project-meta">CYBERSECURITY / PYTHON</div>
-            </div>
-            
-            <div class="project-row gs-reveal">
-              <div class="project-title-wrapper">
-                <h3>SkillBridge</h3>
-                <p>A comprehensive web platform designed to bridge talent and industry. Built with modern JavaScript technologies to connect students with opportunities.</p>
+
+              <!-- Project 04 -->
+              <div class="project-card gs-reveal">
+                <div class="project-thumb">
+                  <!-- Swap this image URL with your real project screenshot -->
+                  <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop" alt="Vaxi-Track">
+                  <div class="thumb-overlay"></div>
+                  <span class="project-badge">DEVELOPMENT / TYPESCRIPT</span>
+                </div>
+                <div class="project-card-body">
+                  <span class="project-num">04</span>
+                  <h3 class="project-card-title">Vaxi-Track</h3>
+                  <p class="project-card-desc">A comprehensive TypeScript-based vaccination tracking solution built for accessibility and seamless healthcare data management.</p>
+                </div>
               </div>
-              <div class="project-meta">WEB PLATFORM / JAVASCRIPT</div>
             </div>
 
-            <div class="project-row gs-reveal">
-              <div class="project-title-wrapper">
-                <h3>NaviLens AR</h3>
-                <p>An Augmented Reality solution developed during the Freedom 250 Trust Teams hackathon to enhance accessibility and user interaction.</p>
+            <!-- Column 2 (Offset Top for Natural Asymmetry) -->
+            <div class="parallax-column col-2">
+              <!-- Project 02 -->
+              <div class="project-card gs-reveal">
+                <div class="project-thumb">
+                  <!-- Swap this image URL with your real project screenshot -->
+                  <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop" alt="SkillBridge">
+                  <div class="thumb-overlay"></div>
+                  <span class="project-badge">WEB PLATFORM / JAVASCRIPT</span>
+                </div>
+                <div class="project-card-body">
+                  <span class="project-num">02</span>
+                  <h3 class="project-card-title">SkillBridge</h3>
+                  <p class="project-card-desc">A comprehensive web platform designed to bridge talent and industry. Built with modern JavaScript technologies to connect students with opportunities.</p>
+                </div>
               </div>
-              <div class="project-meta">AUGMENTED REALITY / AR</div>
+
+              <!-- Project 05 -->
+              <div class="project-card gs-reveal">
+                <div class="project-thumb">
+                  <!-- Swap this image URL with your real project screenshot -->
+                  <img src="https://images.unsplash.com/photo-1527153857715-3908f2ae5e81?q=80&w=800&auto=format&fit=crop" alt="AI Cattle Recognition">
+                  <div class="thumb-overlay"></div>
+                  <span class="project-badge">AI / ML</span>
+                </div>
+                <div class="project-card-body">
+                  <span class="project-num">05</span>
+                  <h3 class="project-card-title">AI Cattle Recognition</h3>
+                  <p class="project-card-desc">Machine learning system for visual data classification of cattle, automating identification using computer vision models.</p>
+                </div>
+              </div>
             </div>
 
-            <div class="project-row gs-reveal">
-              <div class="project-title-wrapper">
-                <h3>Vaxi-Track</h3>
-                <p>A comprehensive TypeScript-based vaccination tracking solution built for accessibility and seamless healthcare data management.</p>
+            <!-- Column 3 -->
+            <div class="parallax-column col-3">
+              <!-- Project 03 -->
+              <div class="project-card gs-reveal">
+                <div class="project-thumb">
+                  <!-- Swap this image URL with your real project screenshot -->
+                  <img src="https://images.unsplash.com/photo-1633493106115-6ce62c3cf338?q=80&w=800&auto=format&fit=crop" alt="NaviLens AR">
+                  <div class="thumb-overlay"></div>
+                  <span class="project-badge">AUGMENTED REALITY / AR</span>
+                </div>
+                <div class="project-card-body">
+                  <span class="project-num">03</span>
+                  <h3 class="project-card-title">NaviLens AR</h3>
+                  <p class="project-card-desc">An Augmented Reality solution developed during the Freedom 250 Trust Teams hackathon to enhance accessibility and user interaction.</p>
+                </div>
               </div>
-              <div class="project-meta">DEVELOPMENT / TYPESCRIPT</div>
-            </div>
-
-            <div class="project-row gs-reveal">
-              <div class="project-title-wrapper">
-                <h3>AI Cattle Recognition</h3>
-                <p>Machine learning system for visual data classification of cattle, automating identification using computer vision models.</p>
-              </div>
-              <div class="project-meta">AI / ML</div>
             </div>
           </div>
         </div>
@@ -377,6 +440,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
   <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
   <script src="https://unpkg.com/split-type@0.3.4/umd/index.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="js/script.js"></script>
 
 </body>

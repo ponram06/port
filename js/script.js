@@ -29,6 +29,13 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let particlesArray;
+let mouseX = -9999;
+let mouseY = -9999;
+
+window.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
 
 class Particle {
   constructor(x, y, directionX, directionY, size, color) {
@@ -156,7 +163,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Hero elements animate in sequentially after preloader clears
+  let hasEnteredHero = false;
   function initHeroEntry() {
+    if (hasEnteredHero) return;
+    hasEnteredHero = true;
+
     const heroTl = gsap.timeline({
       defaults: { ease: 'power4.out' },
       onComplete: () => {
@@ -328,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Scale up ring on hoverable elements
-    document.querySelectorAll('a, button, .magnetic-btn, .project-row').forEach((el) => {
+    document.querySelectorAll('a, button, .magnetic-btn, .project-card').forEach((el) => {
       el.addEventListener('mouseenter', () =>
         gsap.to(cursorRing, { scale: 2.2, duration: 0.3, ease: 'power2.out' })
       );
@@ -401,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (typeof VanillaTilt !== 'undefined') {
     VanillaTilt.init(document.querySelectorAll('.tech-card'),          { max: 15, speed: 400, glare: true, 'max-glare': 0.2, scale: 1.05 });
     VanillaTilt.init(document.querySelectorAll('.profile-frame'),      { max: 8,  speed: 400, glare: true, 'max-glare': 0.3, scale: 1.02 });
-    VanillaTilt.init(document.querySelectorAll('.project-row'),        { max: 3,  speed: 400, glare: true, 'max-glare': 0.05, axis: 'x' });
+    VanillaTilt.init(document.querySelectorAll('.project-card'),        { max: 4,  speed: 400, glare: true, 'max-glare': 0.08, scale: 1.02 });
     VanillaTilt.init(document.querySelectorAll('.info-block.standout'),{ max: 5,  speed: 400, glare: true, 'max-glare': 0.1, scale: 1.02 });
   }
   // ──────────────────────────────────────────────────────────────────────────
@@ -422,7 +433,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ──────────────────────────────────────────────────────────────────────────
 
   // ─── 14. SPOTLIGHT EFFECT ON CARDS ───────────────────────────────────────
-  document.querySelectorAll('.tech-card, .project-row, .info-block').forEach((card) => {
+  document.querySelectorAll('.tech-card, .project-card, .info-block').forEach((card) => {
     card.classList.add('spotlight-card');
     card.addEventListener('mousemove', (e) => {
       const rect = card.getBoundingClientRect();
@@ -464,4 +475,218 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   // ──────────────────────────────────────────────────────────────────────────
 
+  // ─── 18. THREE.JS 3D SCENE (Piece 1: Canvas + 3D Geometry) ─────────────────
+  function initThreeScene() {
+    const canvas = document.getElementById('webgl-canvas');
+    const container = document.getElementById('Scene3D');
+    if (!canvas || !container || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+
+    const getWidth = () => container.clientWidth || window.innerWidth;
+    const getHeight = () => container.clientHeight || window.innerHeight;
+
+    const camera = new THREE.PerspectiveCamera(45, getWidth() / getHeight(), 0.1, 100);
+    camera.position.set(0, 0, 7);
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setSize(getWidth(), getHeight());
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // 3D Object Group (Torus Knot with dark core + accent wireframe)
+    const meshGroup = new THREE.Group();
+
+    // Base geometry
+    const geometry = new THREE.TorusKnotGeometry(1.6, 0.45, 128, 32);
+
+    // Inner dark material
+    const innerMaterial = new THREE.MeshStandardMaterial({
+      color: 0x0a0c10,
+      metalness: 0.85,
+      roughness: 0.25,
+      wireframe: false,
+    });
+    const innerMesh = new THREE.Mesh(geometry, innerMaterial);
+    meshGroup.add(innerMesh);
+
+    // Outer wireframe with portfolio neon accent
+    const wireframeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xe0ff00,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.4,
+    });
+    const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
+    meshGroup.add(wireframeMesh);
+
+    scene.add(meshGroup);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xe0ff00, 1.8);
+    keyLight.position.set(5, 5, 5);
+    scene.add(keyLight);
+
+    const fillLight = new THREE.PointLight(0x00f0ff, 2.0, 50);
+    fillLight.position.set(-5, -3, 3);
+    scene.add(fillLight);
+
+    // Store references on window for subsequent scrub integration
+    window.threeSceneObj = {
+      scene,
+      camera,
+      renderer,
+      meshGroup,
+    };
+
+    // ─── Scroll-Scrubbed Motion (Piece 2) ───────────────────────────
+    const scrubData = {
+      rotX: -0.4,
+      rotY: -0.8,
+      rotZ: -0.2,
+      camZ: 8.5,
+      posY: -0.6,
+    };
+
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: container,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 1.2,
+      },
+    })
+    .fromTo(
+      scrubData,
+      { rotX: -0.4, rotY: -0.8, rotZ: -0.2, camZ: 8.5, posY: -0.6 },
+      {
+        rotX: Math.PI * 2.2,
+        rotY: Math.PI * 3.4,
+        rotZ: Math.PI * 1.2,
+        camZ: 5.4,
+        posY: 0.6,
+        ease: 'none',
+      }
+    );
+
+    // ─── 3D Text Overlay Scroll-Scrub Reveal (Piece 3) ──────────────
+    const overlay = container.querySelector('.scene-3d-overlay');
+    if (overlay) {
+      gsap.timeline({
+        scrollTrigger: {
+          trigger: container,
+          start: 'top 55%',
+          end: 'bottom 45%',
+          scrub: 1,
+        },
+      })
+      .fromTo(
+        overlay,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, ease: 'power2.out', duration: 1 }
+      )
+      .to(overlay, { opacity: 0, y: -40, ease: 'power2.in', duration: 0.8 });
+    }
+
+    // Render loop combining scroll scrub + subtle organic idle rotation
+    let rafId;
+    let idleRotX = 0;
+    let idleRotY = 0;
+
+    function renderLoop() {
+      rafId = requestAnimationFrame(renderLoop);
+
+      idleRotX += 0.0015;
+      idleRotY += 0.0025;
+
+      meshGroup.rotation.x = scrubData.rotX + idleRotX;
+      meshGroup.rotation.y = scrubData.rotY + idleRotY;
+      meshGroup.rotation.z = scrubData.rotZ;
+      meshGroup.position.y = scrubData.posY;
+
+      camera.position.z = scrubData.camZ;
+
+      renderer.render(scene, camera);
+    }
+    renderLoop();
+
+    // Resize handling
+    window.addEventListener('resize', () => {
+      const w = getWidth();
+      const h = getHeight();
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+  }
+
+  initThreeScene();
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // ─── 19. MULTI-COLUMN PROJECT PARALLAX SCROLL ────────────────────────────
+  function initProjectParallax() {
+    const projectsSection = document.getElementById('Projects');
+    if (!projectsSection) return;
+
+    // Apply distinct parallax scrub per column on desktop/tablet views
+    const mm = gsap.matchMedia();
+
+    mm.add('(min-width: 901px)', () => {
+      const col1 = projectsSection.querySelector('.parallax-column.col-1');
+      const col2 = projectsSection.querySelector('.parallax-column.col-2');
+      const col3 = projectsSection.querySelector('.parallax-column.col-3');
+
+      if (col1) {
+        gsap.to(col1, {
+          yPercent: -14,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: projectsSection,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.2,
+          },
+        });
+      }
+
+      if (col2) {
+        gsap.to(col2, {
+          yPercent: -32,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: projectsSection,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.0,
+          },
+        });
+      }
+
+      if (col3) {
+        gsap.to(col3, {
+          yPercent: -18,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: projectsSection,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.4,
+          },
+        });
+      }
+    });
+  }
+
+  initProjectParallax();
+  // ──────────────────────────────────────────────────────────────────────────
+
 });
+
+
