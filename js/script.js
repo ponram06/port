@@ -1,13 +1,15 @@
 // ─── Smooth Scroll: Lenis + GSAP Ticker Sync ───────────────────────────────
 // Lenis drives all scroll momentum; GSAP's ticker calls lenis.raf() each frame
 // so ScrollTrigger reads Lenis positions, not native scroll positions.
+gsap.registerPlugin(ScrollTrigger);
+
 const lenis = new Lenis({
   duration: 1.2,
   easing: (t) => 1 - Math.pow(1 - t, 3), // cubic ease-out — matches reference feel
-  smooth: true,
 });
 
-lenis.on('scroll', ScrollTrigger.update);
+// Wrap update in arrow fn so `this` context is preserved inside GSAP
+lenis.on('scroll', () => ScrollTrigger.update());
 
 gsap.ticker.add((time) => {
   lenis.raf(time * 1000);
@@ -16,33 +18,8 @@ gsap.ticker.add((time) => {
 gsap.ticker.lagSmoothing(0); // prevent GSAP from throttling RAF on slow frames
 // ────────────────────────────────────────────────────────────────────────────
 
-// Custom Cursor
-const cursor = document.querySelector('.cursor');
-const follower = document.querySelector('.cursor-follower');
 
-let posX = 0, posY = 0;
-let mouseX = 0, mouseY = 0;
 
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-  cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
-});
-
-function loop() {
-  posX += (mouseX - posX) / 6;
-  posY += (mouseY - posY) / 6;
-  follower.style.transform = `translate(${posX}px, ${posY}px)`;
-  requestAnimationFrame(loop);
-}
-loop();
-
-// Hover effect for cursor
-const links = document.querySelectorAll('a, button, .magnetic-btn');
-links.forEach(link => {
-  link.addEventListener('mouseenter', () => follower.classList.add('hover'));
-  link.addEventListener('mouseleave', () => follower.classList.remove('hover'));
-});
 
 // Canvas Particle Network Background
 const canvas = document.getElementById('bg-canvas');
@@ -134,29 +111,116 @@ animateCanvas();
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  // Loading Screen
-  const loader = document.getElementById('loader');
-  if (loader) {
-    setTimeout(() => {
-      loader.classList.add('hidden');
-    }, 2200);
-  }
+  // ─── 1. PRELOADER INTRO SEQUENCE (name reveal → slide-up wipe) ───────────
+  const loader         = document.getElementById('loader');
+  const preloaderSans  = document.querySelector('.preloader-sans');
+  const preloaderSerif = document.querySelector('.preloader-serif');
 
-  // ─── Reusable Masked Text Reveal (SplitType) ──────────────────────────────
-  // type:   'chars' | 'lines' (what SplitType splits on)
-  // trigger: 'load'  → plays immediately (with optional delay)
-  //          'scroll'→ plays when element enters viewport
-  // All other options map directly to GSAP tween params.
-  function revealText(target, { type = 'lines', trigger = 'scroll', delay = 0, duration = 0.9, stagger = 0.08, ease = 'power4.out' } = {}) {
-    const elements = typeof target === 'string' ? document.querySelectorAll(target) : [target];
+  // Safety net: if GSAP never fires (e.g. script error), remove loader after 10s
+  const loaderSafetyTimer = setTimeout(() => {
+    if (loader) { loader.style.display = 'none'; }
+    ScrollTrigger.refresh();
+    initHeroEntry();
+  }, 10000);
+
+  const preloaderTl = gsap.timeline({
+    onComplete: () => {
+      clearTimeout(loaderSafetyTimer);
+      ScrollTrigger.refresh();
+      // Hero entry begins only after the overlay is gone
+      initHeroEntry();
+    }
+  });
+
+  // 1. "PONRAM" (sans-serif) enters from below
+  preloaderTl.fromTo(
+    preloaderSans,
+    { y: 20, opacity: 0 },
+    { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' }
+  )
+  // 2. "P." (italic serif) enters ~0.15s after sans begins
+  .fromTo(
+    preloaderSerif,
+    { y: 20, opacity: 0 },
+    { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' },
+    '-=0.85'
+  )
+  // 3. Hold for ~0.6s so name is legible
+  .to({}, { duration: 0.6 })
+  // 4. Slide entire loader overlay up off-screen
+  .to(loader, {
+    yPercent: -100,
+    duration: 0.9,
+    ease: 'power4.inOut',
+    onComplete: () => { loader.style.display = 'none'; }
+  });
+
+  // Hero elements animate in sequentially after preloader clears
+  function initHeroEntry() {
+    const heroTl = gsap.timeline({
+      defaults: { ease: 'power4.out' },
+      onComplete: () => {
+        // Scroll indicator line pulse starts only once the indicator is visible
+        gsap.to('.scroll-indicator .line', {
+          scaleX: 1.8, duration: 1.5, repeat: -1, yoyo: true, ease: 'sine.inOut',
+          delay: 0.5,
+        });
+      }
+    });
+
+    heroTl
+      // Hero subtitle slides up
+      .from('.hero-subtitle', { y: 24, opacity: 0, duration: 0.8, ease: 'power3.out' })
+      // Hero title: SplitType char masked reveal
+      .add(() => {
+        const titleEl = document.querySelector('.hero-title');
+        if (titleEl && typeof SplitType !== 'undefined') {
+          const split = new SplitType(titleEl, { types: 'chars' });
+          gsap.from(split.chars, {
+            yPercent: 120,
+            stagger: 0.04,
+            duration: 1.0,
+            ease: 'power4.out',
+          });
+        }
+      }, '-=0.4')
+      // Hero description
+      .from('.hero-desc', { y: 20, opacity: 0, duration: 0.9, ease: 'power3.out' }, '-=0.5')
+      // Profile photo slides in from right
+      .from('.profile-frame', { x: 60, opacity: 0, duration: 1.0, ease: 'power3.out' }, '-=0.7')
+      // Scroll indicator fades in last
+      .from('.scroll-indicator', { opacity: 0, duration: 0.8 }, '-=0.3');
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
+
+  // ─── 2. REUSABLE MASKED TEXT REVEAL (SplitType) ───────────────────────────
+  // type:    'chars' | 'words' | 'lines'
+  // trigger: 'scroll' → ScrollTrigger  |  'load' → immediate (use in timeline)
+  function revealText(target, {
+    type = 'lines',
+    trigger = 'scroll',
+    delay = 0,
+    duration = 0.9,
+    stagger = 0.08,
+    ease = 'power4.out',
+    start = 'top 85%',
+  } = {}) {
+    if (typeof SplitType === 'undefined') return;
+    const elements = typeof target === 'string'
+      ? Array.from(document.querySelectorAll(target))
+      : [target];
+
     elements.forEach((el) => {
       if (!el) return;
       const split = new SplitType(el, { types: type });
-      const items = type === 'chars' ? split.chars : split.lines;
+      const items = type === 'chars' ? split.chars
+                  : type === 'words' ? split.words
+                  : split.lines;
 
-      const tweenVars = {
-        yPercent: type === 'chars' ? 120 : 100,
-        opacity: type === 'chars' ? 1 : 0,
+      const vars = {
+        yPercent: 110,
+        opacity: type === 'lines' ? 0 : 1,
         stagger,
         duration,
         ease,
@@ -164,248 +228,240 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       if (trigger === 'scroll') {
-        tweenVars.scrollTrigger = {
-          trigger: el,
-          start: 'top 85%',
-        };
+        vars.scrollTrigger = { trigger: el, start };
       }
 
-      gsap.from(items, tweenVars);
+      gsap.from(items, vars);
     });
   }
   // ──────────────────────────────────────────────────────────────────────────
 
-  // Hero Animation
-  gsap.from(".hero-subtitle", { y: 20, opacity: 0, duration: 1, delay: 2.3, ease: "power3.out" });
-  // Hero title: char-masked reveal — same 2.5s delay as original so loader sequence is preserved
-  revealText('.hero-title', { type: 'chars', trigger: 'load', delay: 2.5, duration: 1.2, stagger: 0.05 });
-  gsap.from(".hero-desc", { y: 20, opacity: 0, duration: 1, delay: 3, ease: "power3.out" });
-  gsap.from(".profile-frame", { x: 80, opacity: 0, duration: 1.2, delay: 2.8, ease: "power3.out" });
-  gsap.from(".scroll-indicator", { opacity: 0, duration: 1, delay: 3.5 });
-
-  // Scroll Indicator Line Animation
-  gsap.to(".scroll-indicator .line", {
-    scaleX: 2, duration: 1.5,
-    repeat: -1, yoyo: true, ease: "sine.inOut"
-  });
-
-  // Reveal Elements on Scroll
-  const revealElements = document.querySelectorAll(".gs-reveal");
-  revealElements.forEach((el) => {
-    gsap.fromTo(el,
-      { y: 40, opacity: 0 },
-      {
-        y: 0, opacity: 1, duration: 0.8, ease: "power3.out",
-        scrollTrigger: {
-          trigger: el,
-          start: "top 88%",
-          toggleActions: "play none none reverse"
-        }
-      }
-    );
-  });
-
-  // Scroll-triggered masked line reveals for .reveal-text elements
-  // Uses the reusable revealText() utility defined above
+  // ─── 3. SCROLL-TRIGGERED LINE REVEALS (.reveal-text) ─────────────────────
   document.querySelectorAll('.reveal-text').forEach((el) => {
     revealText(el, { type: 'lines', trigger: 'scroll' });
   });
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Animated Counter for Stats
-  const statNumbers = document.querySelectorAll('.stat-number');
-  statNumbers.forEach(num => {
+  // ─── 4. BLUR-WORD SCROLL REVEALS (.blur-reveal) ───────────────────────────
+  // Matches lukebaffait about-section: words start opacity:0 + blur(8px),
+  // animate in staggered as section scrolls into view.
+  document.querySelectorAll('.blur-reveal').forEach((el) => {
+    if (typeof SplitType === 'undefined') return;
+    const split = new SplitType(el, { types: 'words' });
+    gsap.to(split.words, {
+      opacity: 1,
+      filter: 'blur(0px)',
+      stagger: 0.06,
+      duration: 0.7,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 80%' },
+    });
+  });
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // ─── 5. GENERIC SECTION FADE-INS (.gs-reveal) ────────────────────────────
+  gsap.utils.toArray('.gs-reveal').forEach((el) => {
+    gsap.fromTo(el,
+      { y: 40, opacity: 0 },
+      {
+        y: 0, opacity: 1, duration: 0.9, ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
+      }
+    );
+  });
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // ─── 6. STAT COUNTER ANIMATION ───────────────────────────────────────────
+  document.querySelectorAll('.stat-number').forEach((num) => {
     const target = parseInt(num.getAttribute('data-target'));
     ScrollTrigger.create({
-      trigger: num,
-      start: "top 85%",
+      trigger: num, start: 'top 85%', once: true,
       onEnter: () => {
-        let current = 0;
-        const increment = target / 40;
+        let cur = 0;
+        const inc = target / 40;
         const timer = setInterval(() => {
-          current += increment;
-          if (current >= target) {
-            num.textContent = target;
-            clearInterval(timer);
-          } else {
-            num.textContent = Math.floor(current);
-          }
+          cur += inc;
+          if (cur >= target) { num.textContent = target; clearInterval(timer); }
+          else { num.textContent = Math.floor(cur); }
         }, 40);
       },
-      once: true
     });
   });
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Goal progress bar animation
-  const goalBars = document.querySelectorAll('.goal-bar');
-  goalBars.forEach(bar => {
-    const progress = bar.style.getPropertyValue('--progress');
-    bar.style.width = '0%';
-    ScrollTrigger.create({
-      trigger: bar,
-      start: "top 90%",
-      onEnter: () => {
-        setTimeout(() => { bar.style.width = progress; }, 200);
-      },
-      once: true
+  // ─── 7. MAGNETIC BUTTONS (.magnetic-btn) ─────────────────────────────────
+  // Subtle pull toward cursor — snaps back with elastic ease on leave
+  document.querySelectorAll('.magnetic-btn').forEach((btn) => {
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      gsap.to(btn, { x: x * 0.35, y: y * 0.35, duration: 0.4, ease: 'power3.out' });
+    });
+    btn.addEventListener('mouseleave', () => {
+      gsap.to(btn, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' });
     });
   });
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Magnetic Buttons
-  const magneticBtns = document.querySelectorAll('.magnetic-btn');
-  magneticBtns.forEach(btn => {
-    btn.addEventListener('mousemove', function(e) {
-      const position = btn.getBoundingClientRect();
-      const x = e.pageX - position.left - position.width / 2;
-      const y = e.pageY - position.top - position.height / 2;
-      gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.5, ease: "power3.out" });
-    });
-    btn.addEventListener('mouseleave', function() {
-      gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
-    });
-  });
+  // ─── 8. CUSTOM CURSOR (GSAP-driven) ──────────────────────────────────────
+  const cursorDot = document.querySelector('.cursor');
+  const cursorRing = document.querySelector('.cursor-follower');
 
-  // Back to Top Button
-  const backToTop = document.getElementById('back-to-top');
-  if (backToTop) {
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 500) {
-        backToTop.classList.add('visible');
-      } else {
-        backToTop.classList.remove('visible');
-      }
+  if (cursorDot && cursorRing) {
+    gsap.set([cursorDot, cursorRing], { xPercent: -50, yPercent: -50 });
+
+    const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const mouse = { x: pos.x, y: pos.y };
+    const speed = 0.15;
+
+    gsap.ticker.add(() => {
+      pos.x += (mouse.x - pos.x) * speed;
+      pos.y += (mouse.y - pos.y) * speed;
+      gsap.set(cursorRing, { x: pos.x, y: pos.y });
     });
-    backToTop.addEventListener('click', () => {
-      lenis.scrollTo(0); // use Lenis instead of native scroll so inertia easing applies
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      gsap.set(cursorDot, { x: e.clientX, y: e.clientY });
+    });
+
+    // Scale up ring on hoverable elements
+    document.querySelectorAll('a, button, .magnetic-btn, .project-row').forEach((el) => {
+      el.addEventListener('mouseenter', () =>
+        gsap.to(cursorRing, { scale: 2.2, duration: 0.3, ease: 'power2.out' })
+      );
+      el.addEventListener('mouseleave', () =>
+        gsap.to(cursorRing, { scale: 1, duration: 0.3, ease: 'power2.out' })
+      );
     });
   }
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Mobile Menu Logic
-  const menuBtn = document.querySelector('.menu-btn');
-  const navLinksContainer = document.querySelector('.nav-links');
+  // ─── 9. PAGE TRANSITION WIPE (internal links) ─────────────────────────────
+  // Accent panel wipes up over the page, nav happens, dark panel follows, both wipe away
+  const tPanelAccent = document.getElementById('t-panel-accent');
+  const tPanelDark   = document.getElementById('t-panel-dark');
 
-  if (menuBtn && navLinksContainer) {
-    menuBtn.addEventListener('click', () => {
-      navLinksContainer.classList.toggle('active');
-      const icon = menuBtn.querySelector('i');
-      if (navLinksContainer.classList.contains('active')) {
-        icon.classList.remove('fa-bars');
-        icon.classList.add('fa-times');
-      } else {
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-      }
+  function runPageTransition(href) {
+    const tl = gsap.timeline({
+      onComplete: () => { window.location.href = href; },
     });
+    tl.to(tPanelAccent, { yPercent: 0, duration: 0.45, ease: 'power4.inOut' })
+      .to(tPanelDark,   { yPercent: 0, duration: 0.45, ease: 'power4.inOut' }, '-=0.2');
+  }
 
-    const navItems = navLinksContainer.querySelectorAll('a');
-    navItems.forEach(item => {
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    // Anchor links — smooth scroll via Lenis, no page wipe needed
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) lenis.scrollTo(target, { duration: 1.4, easing: (t) => 1 - Math.pow(1 - t, 3) });
+    });
+  });
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // ─── 10. BACK TO TOP ─────────────────────────────────────────────────────
+  const backToTop = document.getElementById('back-to-top');
+  if (backToTop) {
+    ScrollTrigger.create({
+      start: 500, end: 99999,
+      onToggle: (self) => {
+        gsap.to(backToTop, { opacity: self.isActive ? 1 : 0, duration: 0.3 });
+        backToTop.style.visibility = self.isActive ? 'visible' : 'hidden';
+      },
+    });
+    backToTop.addEventListener('click', () => lenis.scrollTo(0));
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // ─── 11. MOBILE MENU ─────────────────────────────────────────────────────
+  const menuBtn = document.querySelector('.menu-btn');
+  const navLinks = document.querySelector('.nav-links');
+  if (menuBtn && navLinks) {
+    menuBtn.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+      const icon = menuBtn.querySelector('i');
+      icon.classList.toggle('fa-bars');
+      icon.classList.toggle('fa-times');
+    });
+    navLinks.querySelectorAll('a').forEach((item) => {
       item.addEventListener('click', () => {
-        navLinksContainer.classList.remove('active');
+        navLinks.classList.remove('active');
         const icon = menuBtn.querySelector('i');
-        icon.classList.remove('fa-times');
         icon.classList.add('fa-bars');
+        icon.classList.remove('fa-times');
       });
     });
   }
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Vanilla Tilt 3D Animations
+  // ─── 12. VANILLA TILT ────────────────────────────────────────────────────
   if (typeof VanillaTilt !== 'undefined') {
-    VanillaTilt.init(document.querySelectorAll(".tech-card"), {
-      max: 15,
-      speed: 400,
-      glare: true,
-      "max-glare": 0.2,
-      scale: 1.05
-    });
-
-    VanillaTilt.init(document.querySelectorAll(".profile-frame"), {
-      max: 8,
-      speed: 400,
-      glare: true,
-      "max-glare": 0.3,
-      scale: 1.02
-    });
-    
-    VanillaTilt.init(document.querySelectorAll(".project-row"), {
-      max: 3,
-      speed: 400,
-      glare: true,
-      "max-glare": 0.05,
-      axis: "x"
-    });
-    
-    VanillaTilt.init(document.querySelectorAll(".info-block.standout"), {
-      max: 5,
-      speed: 400,
-      glare: true,
-      "max-glare": 0.1,
-      scale: 1.02
-    });
+    VanillaTilt.init(document.querySelectorAll('.tech-card'),          { max: 15, speed: 400, glare: true, 'max-glare': 0.2, scale: 1.05 });
+    VanillaTilt.init(document.querySelectorAll('.profile-frame'),      { max: 8,  speed: 400, glare: true, 'max-glare': 0.3, scale: 1.02 });
+    VanillaTilt.init(document.querySelectorAll('.project-row'),        { max: 3,  speed: 400, glare: true, 'max-glare': 0.05, axis: 'x' });
+    VanillaTilt.init(document.querySelectorAll('.info-block.standout'),{ max: 5,  speed: 400, glare: true, 'max-glare': 0.1, scale: 1.02 });
   }
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Typed.js for Hero Description
+  // ─── 13. TYPED.JS ────────────────────────────────────────────────────────
   if (typeof Typed !== 'undefined') {
-    const heroDescElement = document.querySelector('.hero-desc');
-    if (heroDescElement) {
-      const originalText = heroDescElement.textContent;
-      heroDescElement.innerHTML = '<span id="typed-hero-desc"></span>';
+    const heroDescEl = document.querySelector('.hero-desc');
+    if (heroDescEl) {
+      const originalText = heroDescEl.textContent;
+      heroDescEl.innerHTML = '<span id="typed-hero-desc"></span>';
       new Typed('#typed-hero-desc', {
-        strings: [
-          originalText, 
-          "Building secure architectures.", 
-          "Transforming ideas into digital reality.",
-          "Engineering the future."
-        ],
-        typeSpeed: 40,
-        backSpeed: 20,
-        backDelay: 2000,
-        loop: true,
-        showCursor: true,
-        cursorChar: '_'
+        strings: [originalText, 'Building secure architectures.', 'Transforming ideas into digital reality.', 'Engineering the future.'],
+        typeSpeed: 40, backSpeed: 20, backDelay: 2000,
+        loop: true, showCursor: true, cursorChar: '_',
       });
     }
   }
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Spotlight Effect on Cards
-  const spotlightCards = document.querySelectorAll('.tech-card, .project-row, .info-block');
-  spotlightCards.forEach(card => {
+  // ─── 14. SPOTLIGHT EFFECT ON CARDS ───────────────────────────────────────
+  document.querySelectorAll('.tech-card, .project-row, .info-block').forEach((card) => {
     card.classList.add('spotlight-card');
-    card.addEventListener('mousemove', e => {
+    card.addEventListener('mousemove', (e) => {
       const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      card.style.setProperty('--x', `${x}px`);
-      card.style.setProperty('--y', `${y}px`);
+      card.style.setProperty('--x', `${e.clientX - rect.left}px`);
+      card.style.setProperty('--y', `${e.clientY - rect.top}px`);
     });
   });
+  // ──────────────────────────────────────────────────────────────────────────
 
-
-  // Cursor Click Ripple Effect
-  document.addEventListener('click', e => {
+  // ─── 15. CURSOR CLICK RIPPLE ─────────────────────────────────────────────
+  document.addEventListener('click', (e) => {
     const ripple = document.createElement('div');
     ripple.className = 'cursor-click';
-    ripple.style.left = `${e.clientX}px`;
-    ripple.style.top = `${e.clientY}px`;
-    ripple.style.width = '40px';
-    ripple.style.height = '40px';
+    ripple.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;width:40px;height:40px`;
     document.body.appendChild(ripple);
-    
-    // Remove after animation completes
-    setTimeout(() => {
-      ripple.remove();
-    }, 500);
+    setTimeout(() => ripple.remove(), 500);
   });
+  // ──────────────────────────────────────────────────────────────────────────
 
-  // Scroll Progress Bar
+  // ─── 16. SCROLL PROGRESS BAR ─────────────────────────────────────────────
   const scrollProgress = document.getElementById('scroll-progress');
   if (scrollProgress) {
     window.addEventListener('scroll', () => {
-      const totalScroll = document.documentElement.scrollTop;
-      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scroll = `${totalScroll / windowHeight * 100}%`;
-      scrollProgress.style.width = scroll;
+      const total = document.documentElement.scrollTop;
+      const max   = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      scrollProgress.style.width = `${(total / max) * 100}%`;
     });
   }
+  // ──────────────────────────────────────────────────────────────────────────
 
-
+  // ─── 17. GOAL PROGRESS BARS ──────────────────────────────────────────────
+  document.querySelectorAll('.goal-bar').forEach((bar) => {
+    const progress = bar.style.getPropertyValue('--progress');
+    bar.style.width = '0%';
+    ScrollTrigger.create({
+      trigger: bar, start: 'top 90%', once: true,
+      onEnter: () => setTimeout(() => { bar.style.width = progress; }, 200),
+    });
+  });
+  // ──────────────────────────────────────────────────────────────────────────
 
 });

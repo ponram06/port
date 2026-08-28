@@ -29,28 +29,39 @@ a, button { cursor: none; }
   border-radius: 4px;
 }
 
-/* Loader */
+/* Preloader */
 #loader {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: var(--bg-color); z-index: 99999;
   display: flex; justify-content: center; align-items: center;
-  transition: opacity 0.6s ease, visibility 0.6s ease;
+  pointer-events: auto;
+  will-change: transform;
 }
-#loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-.loader-content { text-align: center; }
-.loader-logo {
-  font-family: var(--font-display); font-size: 2rem; font-weight: 700;
-  color: var(--text-primary); margin-bottom: 30px; letter-spacing: 2px;
+.loader-content {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
 }
-.loader-bar {
-  width: 200px; height: 2px; background: rgba(255,255,255,0.1);
-  border-radius: 2px; overflow: hidden;
+.preloader-sans {
+  font-family: var(--font-main);
+  font-size: clamp(3.5rem, 9vw, 7.5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+  opacity: 0;
+  will-change: transform, opacity;
 }
-.loader-progress {
-  width: 0%; height: 100%; background: var(--accent);
-  animation: loadProgress 1.8s ease-in-out forwards;
+.preloader-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(3.5rem, 9vw, 7.5rem);
+  font-weight: 400;
+  color: var(--accent);
+  line-height: 1;
+  opacity: 0;
+  will-change: transform, opacity;
 }
-@keyframes loadProgress { to { width: 100%; } }
 
 /* Custom Cursor */
 .cursor {
@@ -548,18 +559,57 @@ nav {
 }
 
 /* ===== MASKED TEXT REVEAL (SplitType) ===== */
-/* .line wrappers created by SplitType need overflow:hidden so the
-   translateY animation is clipped — text emerges from below the line
-   baseline rather than floating up through adjacent content.           */
-.reveal-text .line {
-  overflow: hidden;
-  display: block;
+/* CRITICAL: .char/.word are inline by default — yPercent won't work without this */
+.char, .word { display: inline-block; }
+
+/* Mask wrapper: overflow hidden clips the translateY so text slides up from below */
+.reveal-mask { overflow: hidden; display: block; }
+
+/* SplitType auto-generates .line divs — clip each one */
+.reveal-text .line { overflow: hidden; display: block; }
+
+/* Word blur-in reveal (lukebaffait about-section style) */
+.blur-reveal .word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(8px);
+  will-change: opacity, filter;
 }
-/* Hero title chars animate up from below — clip at the title boundary */
-.hero-title {
-  overflow: hidden;
+
+/* ===== PAGE TRANSITION PANELS ===== */
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  pointer-events: none;
+}
+.t-panel-accent {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: translateY(100%);
+  will-change: transform;
+}
+.t-panel-dark {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-color);
+  transform: translateY(100%);
+  will-change: transform;
+}
+
+/* ===== GRAIN OVERLAY ===== */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99997;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  filter: url(#grain);
 }
 /* =========================================== */
+
 
 /* ===== RESPONSIVE ===== */
 

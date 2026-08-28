@@ -8,7 +8,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css" />
@@ -21,9 +21,24 @@
   <!-- Loading Screen -->
   <div id="loader">
     <div class="loader-content">
-      <div class="loader-logo">PONRAM P.</div>
-      <div class="loader-bar"><div class="loader-progress"></div></div>
+      <span class="preloader-sans">PONRAM</span>
+      <span class="preloader-serif">P.</span>
     </div>
+  </div>
+
+  <!-- Grain Noise SVG Filter -->
+  <svg style="display:none" aria-hidden="true">
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </svg>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Page Transition Panels -->
+  <div class="transition-overlay" id="transition-overlay" aria-hidden="true">
+    <div class="t-panel-accent" id="t-panel-accent"></div>
+    <div class="t-panel-dark" id="t-panel-dark"></div>
   </div>
 
   <!-- Custom Cursor -->
@@ -62,7 +77,9 @@
           <div class="hero-layout">
             <div class="hero-left">
               <p class="hero-subtitle">COMPUTER SCIENCE ENGINEERING</p>
-              <h1 class="hero-title">PONRAM</h1>
+              <div class="reveal-mask">
+                <h1 class="hero-title">PONRAM</h1>
+              </div>
               <p class="hero-desc">Crafting logic. Solving problems. Pushing the boundaries of code and performance.</p>
             </div>
             <div class="hero-right">
