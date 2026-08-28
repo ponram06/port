@@ -452,188 +452,243 @@ nav {
 }
 
 /* ==========================================================================
-   MULTI-COLUMN PARALLAX PROJECTS SECTION
+   3D FLOATING HORIZON GALLERY SECTION (Luke Baffait Style)
    ========================================================================== */
-.projects {
-  padding: 140px 5% 150px 5%;
+.floating-gallery-section {
   position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 700px;
   overflow: hidden;
-  scroll-margin-top: 90px;
-}
-
-.projects-header {
-  position: relative;
-  z-index: 10;
-  margin-bottom: 50px;
-}
-
-.project-parallax-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 35px;
-  align-items: start;
-  margin-top: 30px;
-}
-
-.parallax-column {
+  background: #000000;
   display: flex;
-  flex-direction: column;
-  gap: 40px;
-  will-change: transform;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Static base stagger across columns */
-.parallax-column.col-1 {
-  padding-top: 0px;
-}
-
-.parallax-column.col-2 {
-  padding-top: 80px;
-  margin-top: 0;
-}
-
-.parallax-column.col-3 {
-  padding-top: 35px;
-  margin-top: 0;
-}
-
-/* Project Card */
-.project-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 18px;
+.floating-gallery-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1300px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
   overflow: hidden;
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+}
+
+/* Pinned Center Statement Headline */
+.gallery-statement {
+  position: relative;
+  z-index: 25;
+  text-align: center;
+  max-width: 960px;
+  padding: 0 2.5rem;
+  pointer-events: none;
+}
+
+.statement-title {
+  font-family: var(--font-main);
+  font-size: clamp(2.4rem, 5.8vw, 4.8rem);
+  font-weight: 600;
+  line-height: 1.16;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.95);
+}
+
+.statement-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: #ffffff;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 8px;
+}
+
+/* Floating 3D Track */
+.floating-mockup-track {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+/* Floating Mockup Item */
+.floating-mockup-item {
+  position: absolute;
+  will-change: transform, opacity;
+  pointer-events: auto;
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+/* Asymmetric 3D Coordinate Anchors matching Luke Baffait reference */
+.item-bl {
+  left: 6%;
+  bottom: 8%;
+  width: clamp(280px, 26vw, 420px);
+  transform: rotateY(18deg) rotateX(8deg) translateZ(60px);
+  z-index: 15;
+}
+
+.item-tl {
+  left: 4%;
+  top: 12%;
+  width: clamp(220px, 20vw, 320px);
+  transform: rotateY(24deg) rotateX(-10deg) translateZ(-40px);
+  z-index: 8;
+}
+
+.item-tc {
+  left: 38%;
+  top: 4%;
+  width: clamp(240px, 22vw, 340px);
+  transform: rotateX(16deg) translateZ(-80px);
+  z-index: 6;
+}
+
+.item-tr {
+  right: 6%;
+  top: 8%;
+  width: clamp(260px, 23vw, 360px);
+  transform: rotateY(-22deg) rotateX(-8deg) translateZ(-20px);
+  z-index: 7;
+}
+
+.item-br {
+  right: 5%;
+  bottom: 6%;
+  width: clamp(300px, 28vw, 460px);
+  transform: rotateY(-18deg) rotateX(10deg) translateZ(80px);
+  z-index: 16;
+}
+
+.item-bc {
+  left: 36%;
+  bottom: -4%;
+  width: clamp(260px, 24vw, 380px);
+  transform: rotateX(-14deg) translateZ(20px);
+  z-index: 12;
+}
+
+/* 3D Card Construction */
+.mockup-3d-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0d0f14;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1),
               border-color 0.4s ease,
               box-shadow 0.4s ease;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  backdrop-filter: blur(8px);
 }
 
-.project-card:hover {
-  transform: translateY(-8px);
+.floating-mockup-item:hover .mockup-3d-card {
+  transform: scale(1.05) translateZ(30px);
   border-color: var(--accent);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(224, 255, 0, 0.15);
+  box-shadow: 0 35px 70px rgba(0, 0, 0, 0.95), 0 0 30px var(--accent-glow);
 }
 
-/* Thumbnail */
-.project-thumb {
+.mockup-frame {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 10;
-  min-height: 220px;
   overflow: hidden;
-  background: #151821;
+  background: #08090c;
 }
 
-.project-thumb img {
+.mockup-frame img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: grayscale(35%) contrast(1.1) brightness(0.9);
-  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1),
-              filter 0.5s ease;
+  filter: contrast(1.1) brightness(0.95);
+  transition: transform 0.6s ease, filter 0.4s ease;
 }
 
-.project-card:hover .project-thumb img {
-  transform: scale(1.05);
-  filter: grayscale(0%) contrast(1.15) brightness(1.05);
+.floating-mockup-item:hover .mockup-frame img {
+  transform: scale(1.04);
+  filter: contrast(1.15) brightness(1.05);
 }
 
-.thumb-overlay {
+.mockup-glare {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(5, 5, 5, 0.1) 0%, rgba(5, 5, 5, 0.65) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
   pointer-events: none;
-  transition: opacity 0.4s ease;
 }
 
-.project-card:hover .thumb-overlay {
-  opacity: 0.35;
+/* Floating Caption */
+.mockup-caption {
+  padding: 14px 18px;
+  background: rgba(13, 15, 20, 0.94);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
 }
 
-.project-badge {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: rgba(5, 5, 5, 0.85);
-  border: 1px solid rgba(224, 255, 0, 0.4);
-  color: var(--accent);
+.caption-tag {
+  display: block;
   font-family: var(--font-display);
   font-size: 0.65rem;
-  letter-spacing: 1.5px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  backdrop-filter: blur(6px);
-  z-index: 2;
-  text-transform: uppercase;
-}
-
-/* Card Body */
-.project-card-body {
-  padding: 24px 22px;
-  display: flex;
-  flex-direction: column;
-}
-
-.project-num {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
   color: var(--accent);
   letter-spacing: 2px;
-  margin-bottom: 8px;
-  opacity: 0.85;
+  margin-bottom: 4px;
 }
 
-.project-card-title {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+.mockup-caption h4 {
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 10px;
-  line-height: 1.25;
+  margin: 0;
   transition: color 0.3s ease;
 }
 
-.project-card:hover .project-card-title {
+.floating-mockup-item:hover .mockup-caption h4 {
   color: var(--accent);
 }
 
-.project-card-desc {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .project-parallax-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 25px;
-  }
-  .parallax-column.col-2 {
-    margin-top: 0;
-  }
-  .parallax-column.col-3 {
-    grid-column: span 2;
-    margin-top: 0;
-  }
-}
-
 @media (max-width: 768px) {
-  .project-parallax-grid {
+  .floating-gallery-section {
+    height: auto;
+    min-height: auto;
+    padding: 100px 5%;
+  }
+  .floating-gallery-stage {
+    position: relative;
+    perspective: none;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .gallery-statement {
+    position: relative;
+    margin-bottom: 30px;
+    padding: 0;
+  }
+  .floating-mockup-track {
+    position: relative;
+    display: grid;
     grid-template-columns: 1fr;
-    gap: 25px;
+    gap: 30px;
   }
-  .parallax-column {
-    gap: 25px;
-  }
-  .parallax-column.col-2,
-  .parallax-column.col-3 {
-    grid-column: span 1;
-    margin-top: 0;
+  .floating-mockup-item {
+    position: relative;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    transform: none !important;
   }
 }
 

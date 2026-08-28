@@ -630,61 +630,104 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. MULTI-COLUMN PROJECT PARALLAX SCROLL ────────────────────────────
-  function initProjectParallax() {
-    const projectsSection = document.getElementById('Projects');
-    if (!projectsSection) return;
+  // ─── 19. 3D FLOATING MOCKUP HORIZON GALLERY (Luke Baffait Style) ──────────
+  function initFloatingHorizonGallery() {
+    const gallerySection = document.getElementById('Projects');
+    if (!gallerySection) return;
 
-    // Apply distinct parallax scrub per column on desktop/tablet views
     const mm = gsap.matchMedia();
 
-    mm.add('(min-width: 901px)', () => {
-      const col1 = projectsSection.querySelector('.parallax-column.col-1');
-      const col2 = projectsSection.querySelector('.parallax-column.col-2');
-      const col3 = projectsSection.querySelector('.parallax-column.col-3');
+    mm.add('(min-width: 769px)', () => {
+      const itemBl = gallerySection.querySelector('.item-bl');
+      const itemTl = gallerySection.querySelector('.item-tl');
+      const itemTc = gallerySection.querySelector('.item-tc');
+      const itemTr = gallerySection.querySelector('.item-tr');
+      const itemBr = gallerySection.querySelector('.item-br');
+      const itemBc = gallerySection.querySelector('.item-bc');
+      const statement = gallerySection.querySelector('.gallery-statement');
 
-      if (col1) {
-        gsap.to(col1, {
-          yPercent: -14,
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: gallerySection,
+          start: 'top top',
+          end: '+=250%',
+          scrub: 1.2,
+          pin: true,
+          anticipatePin: 1,
+        },
+      });
+
+      // Simultaneous vertical & sideways drift
+      if (itemBl) {
+        tl.to(itemBl, {
+          xPercent: -75,
+          yPercent: -45,
+          rotateY: 32,
+          rotateZ: -6,
           ease: 'none',
-          scrollTrigger: {
-            trigger: projectsSection,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1.2,
-          },
-        });
+        }, 0);
       }
 
-      if (col2) {
-        gsap.to(col2, {
-          yPercent: -32,
+      if (itemTl) {
+        tl.to(itemTl, {
+          xPercent: -90,
+          yPercent: -60,
+          rotateY: 38,
+          rotateZ: -10,
           ease: 'none',
-          scrollTrigger: {
-            trigger: projectsSection,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1.0,
-          },
-        });
+        }, 0);
       }
 
-      if (col3) {
-        gsap.to(col3, {
-          yPercent: -18,
+      if (itemTc) {
+        tl.to(itemTc, {
+          xPercent: 35,
+          yPercent: -130,
+          rotateX: 30,
           ease: 'none',
-          scrollTrigger: {
-            trigger: projectsSection,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1.4,
-          },
-        });
+        }, 0);
+      }
+
+      if (itemTr) {
+        tl.to(itemTr, {
+          xPercent: 85,
+          yPercent: -70,
+          rotateY: -35,
+          rotateZ: 8,
+          ease: 'none',
+        }, 0);
+      }
+
+      if (itemBr) {
+        tl.to(itemBr, {
+          xPercent: 80,
+          yPercent: -50,
+          rotateY: -30,
+          rotateZ: 6,
+          ease: 'none',
+        }, 0);
+      }
+
+      if (itemBc) {
+        tl.to(itemBc, {
+          xPercent: -40,
+          yPercent: 120,
+          rotateX: -26,
+          ease: 'none',
+        }, 0);
+      }
+
+      if (statement) {
+        tl.fromTo(
+          statement,
+          { scale: 0.95, opacity: 0.85 },
+          { scale: 1.05, opacity: 1, ease: 'none' },
+          0
+        );
       }
     });
   }
 
-  initProjectParallax();
+  initFloatingHorizonGallery();
   // ──────────────────────────────────────────────────────────────────────────
 
 });

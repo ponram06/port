@@ -227,98 +227,102 @@
         </div>
       </section>
 
-      <!-- Projects Section -->
-      <section id="Projects" class="projects section compact-section">
-        <div class="container">
-          <div class="projects-header gs-reveal">
-            <span class="meta" style="font-family: var(--font-display); font-size: 0.8rem; color: var(--accent); letter-spacing: 3px; margin-bottom: 12px; display: block;">PORTFOLIO</span>
-            <h2 class="massive-title" style="margin-bottom: 50px;">SELECTED<br>WORKS</h2>
-          </div>
+      <!-- 3D Floating Mockup Horizon Gallery Section (Luke Baffait Style) -->
+      <section id="Projects" class="floating-gallery-section">
+        <div class="floating-gallery-stage">
           
-          <div class="project-parallax-grid">
-            <!-- Column 1 -->
-            <div class="parallax-column col-1">
-              <!-- Project 01 -->
-              <div class="project-card gs-reveal">
-                <div class="project-thumb">
-                  <!-- Swap this image URL with your real project screenshot -->
-                  <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop" alt="Smart Web Pentesting">
-                  <div class="thumb-overlay"></div>
-                  <span class="project-badge">CYBERSECURITY / PYTHON</span>
-                </div>
-                <div class="project-card-body">
-                  <span class="project-num">01</span>
-                  <h3 class="project-card-title">Smart Web Pentesting</h3>
-                  <p class="project-card-desc">AI Automated Security Scanner. A cybersecurity tool designed to detect and analyze web vulnerabilities using AI. Features a modern UI, customizable scans, and PDF reports.</p>
-                </div>
-              </div>
+          <!-- Pinned Center Statement Headline -->
+          <div class="gallery-statement">
+            <h2 class="statement-title">Each project is a chance to <span class="statement-serif">learn, experiment</span> and push my limits.</h2>
+          </div>
 
-              <!-- Project 04 -->
-              <div class="project-card gs-reveal">
-                <div class="project-thumb">
-                  <!-- Swap this image URL with your real project screenshot -->
-                  <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop" alt="Vaxi-Track">
-                  <div class="thumb-overlay"></div>
-                  <span class="project-badge">DEVELOPMENT / TYPESCRIPT</span>
+          <!-- Floating 3D Project Mockup Items (Drifting Sideways & Vertically on Scroll) -->
+          <div class="floating-mockup-track">
+            
+            <!-- Item 1: Bottom-Left Floating Laptop (Smart Web Pentesting) -->
+            <div class="floating-mockup-item item-bl">
+              <div class="mockup-3d-card">
+                <div class="mockup-frame">
+                  <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop" alt="Smart Web Pentesting" onerror="this.src='https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=800&auto=format&fit=crop';">
+                  <div class="mockup-glare"></div>
                 </div>
-                <div class="project-card-body">
-                  <span class="project-num">04</span>
-                  <h3 class="project-card-title">Vaxi-Track</h3>
-                  <p class="project-card-desc">A comprehensive TypeScript-based vaccination tracking solution built for accessibility and seamless healthcare data management.</p>
+                <div class="mockup-caption">
+                  <span class="caption-tag">01 / CYBERSECURITY</span>
+                  <h4>Smart Web Pentesting</h4>
                 </div>
               </div>
             </div>
 
-            <!-- Column 2 (Offset Top for Natural Asymmetry) -->
-            <div class="parallax-column col-2">
-              <!-- Project 02 -->
-              <div class="project-card gs-reveal">
-                <div class="project-thumb">
-                  <!-- Swap this image URL with your real project screenshot -->
-                  <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop" alt="SkillBridge">
-                  <div class="thumb-overlay"></div>
-                  <span class="project-badge">WEB PLATFORM / JAVASCRIPT</span>
+            <!-- Item 2: Top-Left Floating Screen (SkillBridge) -->
+            <div class="floating-mockup-item item-tl">
+              <div class="mockup-3d-card">
+                <div class="mockup-frame">
+                  <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop" alt="SkillBridge" onerror="this.src='https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=800&auto=format&fit=crop';">
+                  <div class="mockup-glare"></div>
                 </div>
-                <div class="project-card-body">
-                  <span class="project-num">02</span>
-                  <h3 class="project-card-title">SkillBridge</h3>
-                  <p class="project-card-desc">A comprehensive web platform designed to bridge talent and industry. Built with modern JavaScript technologies to connect students with opportunities.</p>
-                </div>
-              </div>
-
-              <!-- Project 05 -->
-              <div class="project-card gs-reveal">
-                <div class="project-thumb">
-                  <!-- Swap this image URL with your real project screenshot -->
-                  <img src="https://images.unsplash.com/photo-1527153857715-3908f2ae5e81?q=80&w=800&auto=format&fit=crop" alt="AI Cattle Recognition">
-                  <div class="thumb-overlay"></div>
-                  <span class="project-badge">AI / ML</span>
-                </div>
-                <div class="project-card-body">
-                  <span class="project-num">05</span>
-                  <h3 class="project-card-title">AI Cattle Recognition</h3>
-                  <p class="project-card-desc">Machine learning system for visual data classification of cattle, automating identification using computer vision models.</p>
+                <div class="mockup-caption">
+                  <span class="caption-tag">02 / WEB PLATFORM</span>
+                  <h4>SkillBridge</h4>
                 </div>
               </div>
             </div>
 
-            <!-- Column 3 -->
-            <div class="parallax-column col-3">
-              <!-- Project 03 -->
-              <div class="project-card gs-reveal">
-                <div class="project-thumb">
-                  <!-- Swap this image URL with your real project screenshot -->
+            <!-- Item 3: Top-Center Floating Screen (NaviLens AR) -->
+            <div class="floating-mockup-item item-tc">
+              <div class="mockup-3d-card">
+                <div class="mockup-frame">
                   <img src="https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?q=80&w=800&auto=format&fit=crop" alt="NaviLens AR" onerror="this.src='https://images.unsplash.com/photo-1535223289827-42f1e9919769?q=80&w=800&auto=format&fit=crop';">
-                  <div class="thumb-overlay"></div>
-                  <span class="project-badge">AUGMENTED REALITY / AR</span>
+                  <div class="mockup-glare"></div>
                 </div>
-                <div class="project-card-body">
-                  <span class="project-num">03</span>
-                  <h3 class="project-card-title">NaviLens AR</h3>
-                  <p class="project-card-desc">An Augmented Reality solution developed during the Freedom 250 Trust Teams hackathon to enhance accessibility and user interaction.</p>
+                <div class="mockup-caption">
+                  <span class="caption-tag">03 / AR SYSTEM</span>
+                  <h4>NaviLens AR</h4>
                 </div>
               </div>
             </div>
+
+            <!-- Item 4: Top-Right Floating Monitor (Vaxi-Track) -->
+            <div class="floating-mockup-item item-tr">
+              <div class="mockup-3d-card">
+                <div class="mockup-frame">
+                  <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop" alt="Vaxi-Track" onerror="this.src='https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=800&auto=format&fit=crop';">
+                  <div class="mockup-glare"></div>
+                </div>
+                <div class="mockup-caption">
+                  <span class="caption-tag">04 / HEALTHCARE</span>
+                  <h4>Vaxi-Track</h4>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 5: Bottom-Right Large Laptop (AI Cattle Recognition) -->
+            <div class="floating-mockup-item item-br">
+              <div class="mockup-3d-card">
+                <div class="mockup-frame">
+                  <img src="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=800&auto=format&fit=crop" alt="AI Cattle Recognition" onerror="this.src='https://images.unsplash.com/photo-1527153857715-3908f2ae5e81?q=80&w=800&auto=format&fit=crop';">
+                  <div class="mockup-glare"></div>
+                </div>
+                <div class="mockup-caption">
+                  <span class="caption-tag">05 / AI & ML</span>
+                  <h4>AI Cattle Recognition</h4>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 6: Bottom-Center Display -->
+            <div class="floating-mockup-item item-bc">
+              <div class="mockup-3d-card">
+                <div class="mockup-frame">
+                  <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" alt="Engineering Systems" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop';">
+                  <div class="mockup-glare"></div>
+                </div>
+                <div class="mockup-caption">
+                  <span class="caption-tag">EXPERIMENTS</span>
+                  <h4>Interactive Architectures</h4>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
