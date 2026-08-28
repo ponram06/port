@@ -455,9 +455,16 @@ nav {
    MULTI-COLUMN PARALLAX PROJECTS SECTION
    ========================================================================== */
 .projects {
-  padding: 100px 5% 140px 5%;
+  padding: 140px 5% 150px 5%;
   position: relative;
   overflow: hidden;
+  scroll-margin-top: 90px;
+}
+
+.projects-header {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 50px;
 }
 
 .project-parallax-grid {
@@ -465,7 +472,7 @@ nav {
   grid-template-columns: repeat(3, 1fr);
   gap: 35px;
   align-items: start;
-  margin-top: 40px;
+  margin-top: 30px;
 }
 
 .parallax-column {
@@ -475,13 +482,19 @@ nav {
   will-change: transform;
 }
 
-/* Offset columns for natural stagger */
+/* Static base stagger across columns */
+.parallax-column.col-1 {
+  padding-top: 0px;
+}
+
 .parallax-column.col-2 {
-  margin-top: 60px;
+  padding-top: 80px;
+  margin-top: 0;
 }
 
 .parallax-column.col-3 {
-  margin-top: 20px;
+  padding-top: 35px;
+  margin-top: 0;
 }
 
 /* Project Card */
@@ -510,8 +523,9 @@ nav {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 10;
+  min-height: 220px;
   overflow: hidden;
-  background: #11141c;
+  background: #151821;
 }
 
 .project-thumb img {
