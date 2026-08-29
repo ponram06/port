@@ -1027,7 +1027,7 @@ nav {
   .goal-card p { font-size: 0.85rem; }
 }
 
-/* ─── Circular Gallery Showcase (Reference-Exact 3D + Dynamic Info Panel) ─── */
+/* ─── Circular Gallery Showcase (Compact Panel + Unobscured 3D Orbit) ─── */
 .circle-gallery {
   position: relative;
   height: 600vh;
@@ -1048,11 +1048,11 @@ nav {
 
 .cg-img {
   position: absolute;
-  width: clamp(150px, 17vw, 250px);
+  width: clamp(140px, 14vw, 210px);
   aspect-ratio: 3/2;
   transform-style: preserve-3d;
-  transition: filter 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  transition: filter 0.35s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.35s ease;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
   border-radius: 8px;
 }
 
@@ -1063,89 +1063,94 @@ nav {
   will-change: transform;
 }
 
-/* Dynamic Center Project Information Panel */
+/* Compact Center Project Information Panel (Secondary to 3D Orbit) */
 .cg-info-panel {
   position: absolute;
-  z-index: 900;
+  z-index: 500;
   text-align: center;
-  width: min(90vw, 560px);
-  padding: 2.2rem 2.4rem;
-  background: rgba(8, 8, 8, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85);
+  width: min(85vw, 480px);
+  max-height: 380px;
+  padding: 1.35rem 1.6rem;
+  background: rgba(8, 8, 8, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
   pointer-events: auto;
   will-change: transform, opacity;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .cg-info-panel:hover {
-  border-color: rgba(224, 255, 0, 0.45);
-  box-shadow: 0 25px 80px rgba(224, 255, 0, 0.15);
+  border-color: rgba(224, 255, 0, 0.4);
+  box-shadow: 0 20px 60px rgba(224, 255, 0, 0.12);
 }
 
 .cg-counter {
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--accent);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.35rem;
   text-transform: uppercase;
 }
 
 .cg-title {
   font-family: var(--font-main);
-  font-size: clamp(1.5rem, 2.6vw, 2.3rem);
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
   font-weight: 700;
   line-height: 1.25;
   color: var(--text-primary);
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.4rem;
   letter-spacing: -0.02em;
 }
 
 .cg-desc {
   font-family: var(--font-main);
-  font-size: clamp(0.85rem, 1.05vw, 0.98rem);
-  line-height: 1.6;
+  font-size: clamp(0.78rem, 0.9vw, 0.88rem);
+  line-height: 1.45;
   color: var(--text-secondary);
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .cg-tags {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.4rem;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
 }
 
 .cg-tag {
   font-family: var(--font-main);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.75);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.3em 0.75em;
+  padding: 0.22em 0.65em;
   border-radius: 50px;
 }
 
 .cg-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: var(--accent);
   text-decoration: none;
-  padding: 0.65em 1.5em;
+  padding: 0.45em 1.1em;
   border: 1px solid var(--accent);
   border-radius: 50px;
   transition: all 0.3s ease;
@@ -1154,7 +1159,7 @@ nav {
 .cg-link:hover {
   background: var(--accent);
   color: #000;
-  box-shadow: 0 0 25px var(--accent-glow);
+  box-shadow: 0 0 20px var(--accent-glow);
 }
 
 .cg-arrow {
@@ -1168,23 +1173,23 @@ nav {
 @media (max-width: 768px) {
   .circle-gallery {
     height: auto;
-    padding: 60px 20px;
+    padding: 60px 16px;
     overflow: visible;
   }
   .circle-gallery-pin {
     height: auto;
     flex-direction: column;
-    gap: 30px;
+    gap: 24px;
     perspective: none;
   }
   .cg-img {
     position: relative;
     width: 100%;
-    max-width: 360px;
+    max-width: 340px;
     aspect-ratio: 3/2;
     opacity: 1 !important;
     transform: none !important;
-    border-radius: 12px;
+    border-radius: 10px;
     overflow: hidden;
     filter: none !important;
   }
@@ -1193,9 +1198,11 @@ nav {
     opacity: 1 !important;
     transform: none !important;
     width: 100%;
-    margin-top: 15px;
-    padding: 1.8rem 1.5rem;
+    max-width: 340px;
+    margin-top: 10px;
+    padding: 1.4rem 1.2rem;
   }
 }
+
 
 

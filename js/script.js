@@ -738,11 +738,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const count = cgImgs.length;
 
-    const rx = vw * 0.34;
-    const rz = 500;
-    const tiltY = vw <= 768 ? 80 : 180;
+    const rx = Math.min(vw * 0.38, 560);
+    const rz = 450;
+    const tiltY = vw <= 768 ? 60 : 120;
     const entryAngle = Math.PI / 2;
-    const offX = vw * 0.85;
+    const offX = vw * 0.88;
 
     function getPos(t) {
       if (t <= 0.12) {
@@ -789,15 +789,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       gsap.to(cgInfoPanel, {
         opacity: 0,
-        y: 12,
-        duration: 0.22,
+        y: 10,
+        duration: 0.2,
         ease: 'power2.in',
         onComplete: function () {
           if (idx === -1) {
             if (cgCounter) cgCounter.textContent = 'PROJECTS';
-            if (cgTitle) cgTitle.textContent = "Things I've built & experimented with.";
-            if (cgDesc) cgDesc.textContent = "Scroll down to explore the 3D interactive showcase.";
-            if (cgTags) cgTags.innerHTML = '<span class="cg-tag">PORTFOLIO</span><span class="cg-tag">2026</span><span class="cg-tag">SHOWCASE</span>';
+            if (cgTitle) cgTitle.textContent = "Things I've built, experimented with & learned from.";
+            if (cgDesc) cgDesc.textContent = "Scroll down to explore the 3D interactive portfolio orbit.";
+            if (cgTags) cgTags.innerHTML = '<span class="cg-tag">PORTFOLIO</span><span class="cg-tag">2026</span><span class="cg-tag">SCROLL TO EXPLORE ↓</span>';
             if (cgLink) cgLink.style.display = 'none';
           } else {
             const p = PROJECTS_DATA[idx] || PROJECTS_DATA[0];
@@ -814,7 +814,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gsap.to(cgInfoPanel, {
             opacity: 1,
             y: 0,
-            duration: 0.3,
+            duration: 0.28,
             ease: 'power2.out'
           });
         }
@@ -842,10 +842,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
 
-          let alpha = 1;
-          if (imgT < 0.06) alpha = imgT / 0.06;
-          else if (imgT > 0.94) alpha = (1 - imgT) / 0.06;
-
           const pos = getPos(imgT);
 
           if (imgT >= 0.08 && imgT <= 0.92 && pos.z > maxZ) {
@@ -858,7 +854,7 @@ document.addEventListener("DOMContentLoaded", () => {
           activeIdx = -1;
         }
 
-        // Apply 3D transforms & visual highlighting
+        // Apply 3D transforms & visual priority highlighting
         cgImgs.forEach(function (img, i) {
           const imgT = progress * totalRange - i * stagger;
 
@@ -875,19 +871,21 @@ document.addEventListener("DOMContentLoaded", () => {
           const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
 
           if (i === activeIdx) {
+            // Front active card: enlarged, sharp, bright, highest Z-index
             img.style.transform =
-              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
-              ' rotateY(' + rotDeg + 'deg) scale(1.16)';
+              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 50).toFixed(1) + 'px)' +
+              ' rotateY(' + rotDeg + 'deg) scale(1.18)';
             img.style.opacity = '1';
-            img.style.filter = 'blur(0px) brightness(1.15)';
+            img.style.filter = 'blur(0px) brightness(1.2)';
             img.style.zIndex = Math.round(pos.z + 1000);
           } else {
+            // Side & background cards: smaller, dimmer, subtle blur
             img.style.transform =
               'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-              ' rotateY(' + rotDeg + 'deg) scale(0.92)';
-            img.style.opacity = (alpha * 0.55).toFixed(2);
-            img.style.filter = 'blur(3px) brightness(0.65)';
-            img.style.zIndex = Math.round(pos.z + 600);
+              ' rotateY(' + rotDeg + 'deg) scale(0.88)';
+            img.style.opacity = (alpha * 0.70).toFixed(2);
+            img.style.filter = 'blur(2px) brightness(0.70)';
+            img.style.zIndex = Math.round(pos.z + 200);
           }
         });
 
@@ -900,7 +898,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Gentle center panel vertical drift
         const phraseStart = 0.2;
         const phraseEnd = 0.8;
-        const travelY = 160;
+        const travelY = 120;
 
         if (progress >= phraseStart && progress <= phraseEnd) {
           const globalP = (progress - phraseStart) / (phraseEnd - phraseStart);
