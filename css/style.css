@@ -1048,18 +1048,20 @@ nav {
 
 .cg-img {
   position: absolute;
-  width: clamp(130px, 11vw, 180px);
+  width: clamp(120px, 9.5vw, 175px);
   aspect-ratio: 3/2;
   transform-style: preserve-3d;
   transition: filter 0.35s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.35s ease;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
   border-radius: 8px;
+  will-change: transform, opacity;
 }
 
 .cg-slice {
   position: absolute;
   top: 0;
   height: 100%;
+  background-size: cover;
   will-change: transform;
 }
 

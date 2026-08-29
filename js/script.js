@@ -750,24 +750,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const cgPhraseWords = cgPhrase ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
 
-    // Reference 3D Orbit Geometry
-    const rx = Math.min(vw * 0.44, 620);
-    const rz = 450;
-    const tiltY = vw <= 768 ? 60 : 135;
+    // Responsive Safe Orbit Geometry (Guarantees no card touches or crosses viewport edges)
+    const cardW = Math.min(Math.max(120, vw * 0.095), 175);
+    const cardH = cardW * 2 / 3;
+    const cardHalfW = cardW / 2;
+    const cardHalfH = cardH / 2;
+
+    const safeMarginX = 55;
+    const safeMarginY = 45;
+
+    // Responsive safe orbit radius bounds:
+    const maxSafeRx = (vw / 2) - cardHalfW - safeMarginX;
+    const rx = Math.max(140, Math.min(maxSafeRx, vw * 0.32));
+
+    const maxSafeTiltY = (vh / 2) - cardHalfH - safeMarginY - 140;
+    const tiltY = Math.max(50, Math.min(maxSafeTiltY, vh * 0.22));
+
+    const rz = Math.min(420, rx * 0.85);
     const entryAngle = Math.PI / 2;
 
     function getPosForAngle(angle) {
       const x = Math.cos(angle) * rx;
       const z = Math.sin(angle) * rz;
 
-      // Subtle inward perspective tilt (-9deg to +9deg), NEVER flipping 90deg/180deg
-      const rotYDeg = (x / rx) * -9;
+      // Subtle inward perspective tilt (-12deg to +12deg), clamped strictly, NEVER flipping
+      const rotYDeg = Math.max(-12, Math.min(12, (x / rx) * -10));
 
       // Protected Center Safe Zone Offset:
-      // When image passes through center column (|x| < 320px), push Y offset away from center text
+      // When image passes through central content area (|x| < 300px), push Y offset away from text
       const distFromCenter = Math.abs(x);
-      const centerFactor = 1 - Math.min(1, distFromCenter / 320);
-      const verticalClearance = (z >= 0 ? 150 : -150) * centerFactor;
+      const centerFactor = 1 - Math.min(1, distFromCenter / 300);
+      const verticalClearance = (z >= 0 ? 145 : -145) * centerFactor;
 
       return {
         x: x,
