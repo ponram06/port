@@ -630,7 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. CIRCULAR IMAGE GALLERY (Reference-Exact Architecture + Intro) ─────
+  // ─── 19. CIRCULAR IMAGE GALLERY (Reference 3D Orbit + Finite Timeline) ────
   function initCircleGallery() {
     const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
@@ -681,7 +681,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Build cylindrical slices for image curvature (Exact Reference Logic)
     (function buildSlices() {
       const SLICES = 10;
-      const imgW = Math.min(Math.max(130, vw * 0.15), 220);
+      const imgW = Math.min(Math.max(130, vw * 0.15), 210);
       const imgH = imgW * 2 / 3;
       const orbitR = (vw * 0.38 + 520) / 2;
       const bendRad = imgW / orbitR;
@@ -750,59 +750,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const cgPhraseWords = cgPhrase ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
 
-    // Reference-Exact 3D Trajectory Math
-    const rx = Math.min(vw * 0.44, 650);
+    // Reference 3D Orbit Geometry
+    const rx = Math.min(vw * 0.44, 620);
     const rz = 450;
     const tiltY = vw <= 768 ? 60 : 135;
     const entryAngle = Math.PI / 2;
-    const offX = vw * 0.90;
 
-    function getPos(t) {
-      if (t <= 0.12) {
-        const p = t / 0.12;
-        return {
-          x: -offX * (1 - p),
-          y: tiltY + 120,
-          z: rz * p,
-          rotY: 0
-        };
-      }
-      if (t <= 0.88) {
-        const p = (t - 0.12) / 0.76;
-        const angle = entryAngle - p * Math.PI * 2;
-        const x = Math.cos(angle) * rx;
-        const z = Math.sin(angle) * rz;
-        const ry = p * Math.PI * 2;
+    function getPosForAngle(angle) {
+      const x = Math.cos(angle) * rx;
+      const z = Math.sin(angle) * rz;
+      const ry = angle - entryAngle;
 
-        // Protected Center Safe Zone Offset:
-        // When image enters center column (|x| < 340px), push Y offset away from center text
-        const distFromCenter = Math.abs(x);
-        const centerFactor = 1 - Math.min(1, distFromCenter / 340);
-        const verticalClearance = (z >= 0 ? 150 : -150) * centerFactor;
+      // Protected Center Safe Zone Offset:
+      // When image passes through center column (|x| < 320px), push Y offset away from center text
+      const distFromCenter = Math.abs(x);
+      const centerFactor = 1 - Math.min(1, distFromCenter / 320);
+      const verticalClearance = (z >= 0 ? 150 : -150) * centerFactor;
 
-        return {
-          x: x,
-          y: (z / rz) * tiltY + verticalClearance,
-          z: z,
-          rotY: ry
-        };
-      }
-      const p = (t - 0.88) / 0.12;
       return {
-        x: offX * p,
-        y: tiltY + 120,
-        z: rz * (1 - p),
-        rotY: Math.PI * 2
+        x: x,
+        y: (z / rz) * tiltY + verticalClearance,
+        z: z,
+        rotY: ry
       };
     }
 
-    const stagger = 0.09;
-    const totalRange = 1 + stagger * (count - 1);
-
-    cgImgs.forEach(function (img) { img.style.opacity = '0'; });
-
     const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
     let currentActiveIdx = -999;
+    let currentMode = 'NONE'; // 'INTRO', 'GALLERY', 'ENDING'
 
     function renderCenterUI(idx) {
       if (!cgCenterUI) return;
@@ -843,67 +818,58 @@ document.addEventListener("DOMContentLoaded", () => {
       onUpdate: function (self) {
         const progress = self.progress;
 
-        // 1. Reference Introductory Phrase Staging (0.00 to 0.18 progress)
-        const phraseStart = 0.0;
-        const phraseEnd = 0.18;
-        const travelY = 140;
+        // ─── FINITE TIMELINE STATES ───
+        // progress 0.00 - 0.10: STATE 0 (Intro Phrase)
+        // progress 0.10 - 0.85: GALLERY PHASE (Projects 01/06 -> 06/06)
+        // progress 0.85 - 1.00: FINAL STATE (Ending Phrase)
 
-        if (progress <= phraseEnd) {
-          const globalP = Math.max(0, Math.min(1, (progress - phraseStart) / (phraseEnd - phraseStart)));
-          const yOffset = travelY * (0.5 - globalP);
+        const isIntro = progress <= 0.10;
+        const isEnding = progress >= 0.85;
+        const isGallery = !isIntro && !isEnding;
+
+        // 1. Staging Intro & Ending Phrase vs Project Center UI
+        if (isIntro || isEnding) {
+          const modeP = isIntro ? Math.max(0, Math.min(1, progress / 0.10)) : Math.max(0, Math.min(1, (progress - 0.85) / 0.15));
           if (cgPhrase) {
-            cgPhrase.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
             let alpha = 1;
-            if (globalP < 0.15) alpha = globalP / 0.15;
-            else if (globalP > 0.70) alpha = (1 - globalP) / 0.30;
+            if (isIntro) alpha = modeP < 0.2 ? modeP / 0.2 : (modeP > 0.8 ? (1 - modeP) / 0.2 : 1);
+            else alpha = modeP < 0.2 ? modeP / 0.2 : 1;
             cgPhrase.style.opacity = alpha;
+            cgPhrase.style.transform = 'translateY(' + (40 * (0.5 - modeP)).toFixed(1) + 'px)';
           }
 
-          cgPhraseWords.forEach(function (w, wi) {
-            if (globalP < 0.6) {
-              const revealP = globalP / 0.6;
-              const wordT = revealP * (cgPhraseWords.length + 4) - wi;
-              const wP = Math.max(0, Math.min(1, wordT / 3));
-              w.style.opacity = wP;
-              w.style.filter = 'blur(' + (8 * (1 - wP)).toFixed(1) + 'px)';
-            } else {
-              w.style.opacity = '1';
-              w.style.filter = 'blur(0px)';
-            }
+          cgPhraseWords.forEach(function (w) {
+            w.style.opacity = '1';
+            w.style.filter = 'blur(0px)';
           });
 
           if (cgCenterUI) {
             cgCenterUI.style.opacity = '0';
             cgCenterUI.style.pointerEvents = 'none';
           }
+          currentActiveIdx = -999;
         } else {
           if (cgPhrase) cgPhrase.style.opacity = '0';
         }
 
-        // 2. Authoritative Project Selection (0.14 to 0.90 progress -> index 0 to 5)
+        // 2. Determine Active Project Index during Gallery Phase (Clamped 0 to 5)
         let activeIdx = -1;
-        if (progress > 0.12) {
-          const galleryP = Math.max(0, Math.min(1, (progress - 0.14) / 0.74));
+        if (isGallery) {
+          const galleryP = Math.max(0, Math.min(1, (progress - 0.10) / 0.75));
           activeIdx = Math.min(count - 1, Math.max(0, Math.floor(galleryP * count)));
         }
 
-        // 3. Position 3D project cards along reference trajectory getPos()
+        // 3. Position ALL 6 3D Project Cards around the continuous orbit
+        // All 6 cards remain on-screen in 3D orbit at all times!
+        const orbitAngleOffset = entryAngle - progress * Math.PI * 2.2;
+
         cgImgs.forEach(function (img, i) {
-          const imgT = progress * totalRange - i * stagger;
-
-          if (imgT <= 0 || imgT >= 1) {
-            img.style.opacity = '0';
-            return;
-          }
-
-          let alpha = 1;
-          if (imgT < 0.06) alpha = imgT / 0.06;
-          else if (imgT > 0.94) alpha = (1 - imgT) / 0.06;
-
-          const pos = getPos(imgT);
+          const baseAngle = entryAngle - (i / count) * Math.PI * 2;
+          const cardAngle = baseAngle - progress * Math.PI * 2.2;
+          const pos = getPosForAngle(cardAngle);
           const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
 
-          if (i === activeIdx) {
+          if (i === activeIdx && isGallery) {
             // Active front card: sharp, bright, controlled scale
             img.style.transform =
               'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
@@ -912,18 +878,21 @@ document.addEventListener("DOMContentLoaded", () => {
             img.style.filter = 'blur(0px) brightness(1.2)';
             img.style.zIndex = Math.round(pos.z + 1000);
           } else {
-            // Background/side cards: smaller, dimmer, subtle blur
+            // Background & side cards: smaller, dimmer, subtle blur (ALWAYS VISIBLE ON SCREEN)
+            let alpha = 0.75;
+            if (pos.z < -200) alpha = 0.45;
+
             img.style.transform =
               'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-              ' rotateY(' + rotDeg + 'deg) scale(0.85)';
-            img.style.opacity = (alpha * 0.70).toFixed(2);
+              ' rotateY(' + rotDeg + 'deg) scale(0.84)';
+            img.style.opacity = alpha.toFixed(2);
             img.style.filter = 'blur(1.5px) brightness(0.72)';
             img.style.zIndex = Math.round(pos.z + 200);
           }
         });
 
         // 4. Update floating center typography when active project changes
-        if (activeIdx !== -1 && activeIdx !== currentActiveIdx) {
+        if (isGallery && activeIdx !== -1 && activeIdx !== currentActiveIdx) {
           currentActiveIdx = activeIdx;
           renderCenterUI(activeIdx);
         }
