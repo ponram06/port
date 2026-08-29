@@ -762,7 +762,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const p = t / 0.12;
         return {
           x: -offX * (1 - p),
-          y: tiltY,
+          y: tiltY + 120,
           z: rz * p,
           rotY: 0
         };
@@ -773,9 +773,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const x = Math.cos(angle) * rx;
         const z = Math.sin(angle) * rz;
         const ry = p * Math.PI * 2;
+
+        // Protected Center Safe Zone Offset:
+        // When image enters center column (|x| < 340px), push Y offset away from center text
+        const distFromCenter = Math.abs(x);
+        const centerFactor = 1 - Math.min(1, distFromCenter / 340);
+        const verticalClearance = (z >= 0 ? 150 : -150) * centerFactor;
+
         return {
           x: x,
-          y: (z / rz) * tiltY,
+          y: (z / rz) * tiltY + verticalClearance,
           z: z,
           rotY: ry
         };
@@ -783,7 +790,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const p = (t - 0.88) / 0.12;
       return {
         x: offX * p,
-        y: tiltY,
+        y: tiltY + 120,
         z: rz * (1 - p),
         rotY: Math.PI * 2
       };

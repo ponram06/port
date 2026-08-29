@@ -1048,7 +1048,7 @@ nav {
 
 .cg-img {
   position: absolute;
-  width: clamp(150px, 13vw, 210px);
+  width: clamp(130px, 11vw, 180px);
   aspect-ratio: 3/2;
   transform-style: preserve-3d;
   transition: filter 0.35s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.35s ease;
@@ -1088,12 +1088,12 @@ nav {
   color: var(--accent);
 }
 
-/* Minimal Floating Typography Center Project UI */
+/* Minimal Floating Typography Center Project UI (Protected Safe Zone) */
 .cg-center-ui {
   position: absolute;
   z-index: 500;
   text-align: center;
-  width: min(85vw, 460px);
+  width: min(85vw, 440px);
   padding: 0 1rem;
   pointer-events: none;
   will-change: transform, opacity, filter;
