@@ -630,179 +630,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. PROJECTS GALLERY — Luke Baffait exact scatter style ──────────────
-  function initFloatingHorizonGallery() {
-    const gallerySection = document.getElementById('Projects');
-    if (!gallerySection) return;
-
-    const mm = gsap.matchMedia();
-
-    mm.add('(min-width: 769px)', () => {
-      const items   = Array.from(gallerySection.querySelectorAll('.floating-mockup-item'));
-      const statement = gallerySection.querySelector('.gallery-statement');
-      if (!items.length) return;
-
-      /* ─────────────────────────────────────────────────────────────────────
-         FINAL RESTING POSITIONS  (matched pixel-by-pixel to the reference)
-         ─────────────────────────────────────────────────────────────────────
-         left/top  = position of the card's top-left corner in viewport %
-         rotateY   = horizontal 3D tilt  (+ = left face tilts toward you)
-         rotateX   = vertical 3D tilt    (+ = top tilts toward you)
-         scale     = perceived depth
-         zIndex    = layering (25 = in front of text, <25 = behind text)
-         w         = card width as vw units
-      ─────────────────────────────────────────────────────────────────────── */
-      const REST = [
-        // 0 — far-left bottom: large landscape laptop, partially off-left edge
-        { left: '-2vw',  top: '52%', rotateY: 20,  rotateX:  6,  scale: 1.0,  zIndex: 30, w: '28vw' },
-        // 1 — left column top: small portrait monitor
-        { left: '10vw',  top: '14%', rotateY: 24,  rotateX: -5,  scale: 0.70, zIndex: 10, w: '15vw' },
-        // 2 — left column mid: taller portrait screen (the coloured one)
-        { left: '9vw',   top: '38%', rotateY: 22,  rotateX:  4,  scale: 0.60, zIndex: 8,  w: '14vw' },
-        // 3 — center-left cluster: landscape screen overlapping text from left
-        { left: '26vw',  top: '18%', rotateY: -8,  rotateX: 14,  scale: 0.88, zIndex: 20, w: '22vw' },
-        // 4 — center-right cluster: landscape tilted right, overlapping text right
-        { left: '54vw',  top: '14%', rotateY: -28, rotateX: 10,  scale: 0.88, zIndex: 20, w: '22vw' },
-        // 5 — far-right: large landscape laptop, partially off-right edge
-        { left: '74vw',  top: '50%', rotateY: -18, rotateX:  8,  scale: 1.0,  zIndex: 30, w: '28vw' },
-      ];
-
-      /* ─────────────────────────────────────────────────────────────────────
-         FLY-IN ORIGINS  — where each card starts before animating in.
-         Each card comes from the edge nearest its resting position.
-      ─────────────────────────────────────────────────────────────────────── */
-      const ORIGIN = [
-        { x: '-100vw', y: '40vh',  rotateY: 35,  rotateX: 15,  scale: 0.3, opacity: 0 },
-        { x: '-80vw',  y: '-60vh', rotateY: 50,  rotateX:-18,  scale: 0.25, opacity: 0 },
-        { x: '-80vw',  y:  '0vh', rotateY: 48,  rotateX: 12,  scale: 0.25, opacity: 0 },
-        { x:   '0',   y: '-90vh', rotateY:  0,  rotateX: 45,  scale: 0.3, opacity: 0 },
-        { x:   '0',   y: '-90vh', rotateY: -5,  rotateX: 45,  scale: 0.3, opacity: 0 },
-        { x:  '100vw', y: '40vh',  rotateY:-35,  rotateX: 15,  scale: 0.3, opacity: 0 },
-      ];
-
-      // Stamp each card at its resting position but offset by its fly-in origin
-      items.forEach((item, i) => {
-        const r = REST[i]   || REST[0];
-        const o = ORIGIN[i] || ORIGIN[0];
-        gsap.set(item, {
-          position: 'absolute',
-          left: r.left,
-          top:  r.top,
-          width: r.w,
-          zIndex: r.zIndex,
-          transformStyle: 'preserve-3d',
-          opacity: o.opacity,
-          scale:   o.scale,
-          x:       o.x,
-          y:       o.y,
-          rotateY: o.rotateY,
-          rotateX: o.rotateX,
-        });
-      });
-
-      // Text starts hidden — it appears AFTER all 6 cards land
-      if (statement) gsap.set(statement, { xPercent: -50, yPercent: -50, opacity: 0, y: 30, scale: 0.94 });
-
-      /* ─────────────────────────────────────────────────────────────────────
-         TIMELINE MATH
-         Phase 1 (0 → lastDone): card 0 flies in, then card 1, … card 5
-         Phase 2 (lastDone+0.4 → lastDone+1.8): text reveals
-         Phase 3 (hold 1.2s)
-         Phase 4 (exit): clockwise rotation + scale down + blur → fade
-      ─────────────────────────────────────────────────────────────────────── */
-      const N           = items.length;   // 6
-      const STEP        = 1.0;            // scroll units between each card start
-      const FLY         = 1.1;            // duration of each card's fly-in
-      const lastDone    = (N - 1) * STEP + FLY;   // ≈ 6.1
-      const TEXT_IN     = lastDone + 0.4;           // ≈ 6.5
-      const HOLD_END    = TEXT_IN  + 2.0;           // ≈ 8.5
-      const EXIT        = HOLD_END;                  // ≈ 8.5
-      const EXIT_DUR    = 2.8;
-      const TOTAL       = EXIT + EXIT_DUR;           // ≈ 11.3
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: gallerySection,
-          start: 'top top',
-          end: `+=${Math.round(TOTAL * 110)}%`,
-          scrub: 1.8,
-          pin: true,
-          anticipatePin: 1,
-        },
-      });
-
-      // ── PHASE 1: Cards fly in one by one ─────────────────────────────────
-      items.forEach((item, i) => {
-        const r = REST[i] || REST[0];
-        tl.to(item, {
-          opacity: 1,
-          x: 0,
-          y: 0,
-          scale:   r.scale,
-          rotateY: r.rotateY,
-          rotateX: r.rotateX,
-          duration: FLY,
-          ease: 'power3.out',
-        }, i * STEP);
-      });
-
-      // ── PHASE 2: Text reveals after ALL cards are settled ────────────────
-      if (statement) {
-        tl.to(statement, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 1.4,
-          ease: 'power2.out',
-        }, TEXT_IN);
-      }
-
-      // ── PHASE 3: HOLD — nothing moves (leave a gap in the timeline) ──────
-      tl.to({}, { duration: 1.2 }, TEXT_IN + 1.4);
-
-      // ── PHASE 4: Clockwise spiral exit ───────────────────────────────────
-      // Cards individually spin clockwise and shrink/blur away
-      items.forEach((item, i) => {
-        const spreadAngle = (i / N) * 55; // stagger exit angles around clock
-        tl.to(item, {
-          rotation: 50 + spreadAngle,     // clockwise = positive rotation
-          scale: 0.25,
-          opacity: 0,
-          filter: 'blur(12px)',
-          duration: EXIT_DUR,
-          ease: 'power2.in',
-        }, EXIT + i * 0.08);
-      });
-
-      // Text blurs out in the middle of the exit
-      if (statement) {
-        tl.to(statement, {
-          opacity: 0,
-          y: -35,
-          scale: 1.12,
-          filter: 'blur(10px)',
-          duration: EXIT_DUR * 0.6,
-          ease: 'power2.in',
-        }, EXIT + 0.5);
-      }
-    });
-
-    // ── MOBILE: just show cards statically ───────────────────────────────────
-    mm.add('(max-width: 768px)', () => {
-      const items = gallerySection.querySelectorAll('.floating-mockup-item');
-      const statement = gallerySection.querySelector('.gallery-statement');
-      items.forEach(item => gsap.set(item, { clearProps: 'all' }));
-      if (statement) gsap.set(statement, { clearProps: 'all' });
-    });
-  }
-
-  initFloatingHorizonGallery();
-  initCircleGallery();
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 20. CIRCULAR IMAGE GALLERY (Reference Exact Implementation) ──────────
+  // ─── 19. CIRCULAR IMAGE GALLERY (Reference Exact Implementation) ──────────
   function initCircleGallery() {
-    const cgSection = document.getElementById('circle-gallery');
+    const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
 
     function isMobileViewport() {
@@ -826,7 +656,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const totalBendDeg = bendRad * 180 / Math.PI;
       const stepDeg = totalBendDeg / SLICES;
 
-      document.querySelectorAll('#circle-gallery .cg-img').forEach(function (img) {
+      cgSection.querySelectorAll('.cg-img').forEach(function (img) {
+        if (img.tagName !== 'IMG') return; // Prevent double-slicing
         const src = img.getAttribute('src');
         const wrapper = document.createElement('div');
         wrapper.className = 'cg-img';
@@ -838,7 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
           sl.style.width = displayW.toFixed(1) + 'px';
           sl.style.left = '50%';
           sl.style.marginLeft = (-displayW / 2).toFixed(1) + 'px';
-          sl.style.backgroundImage = 'url(' + src + ')';
+          sl.style.backgroundImage = 'url("' + src + '")';
           sl.style.backgroundSize = imgW.toFixed(1) + 'px ' + imgH.toFixed(1) + 'px';
           sl.style.backgroundPosition = (-s * sliceW).toFixed(1) + 'px 0';
           sl.style.transformOrigin = '50% 50% ' + (-cylR).toFixed(1) + 'px';
@@ -851,11 +682,11 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     })();
 
-    const cgImgs = gsap.utils.toArray('#circle-gallery .cg-img');
-    const cgPhrase = document.getElementById('cg-phrase');
+    const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
+    const cgPhrase = cgSection.querySelector('#cg-phrase') || document.getElementById('cg-phrase');
     const count = cgImgs.length;
 
-    // Wrap phrase words
+    // Wrap phrase words for blur-to-sharp reveal
     (function wrapPhraseWords(el) {
       if (!el) return;
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -878,7 +709,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     })(cgPhrase);
 
-    const cgPhraseWords = gsap.utils.toArray('#cg-phrase .word');
+    const cgPhraseWords = cgPhrase ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
 
     const rx = vw * 0.34;
     const rz = 500;
@@ -923,11 +754,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cgImgs.forEach(function (img) { img.style.opacity = '0'; });
 
+    const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
+
     ScrollTrigger.create({
-      trigger: '#circle-gallery',
+      trigger: cgSection,
       start: 'top top',
       end: 'bottom bottom',
-      pin: '#circle-gallery-pin',
+      pin: pinEl,
+      anticipatePin: 1,
       onUpdate: function (self) {
         const progress = self.progress;
 
@@ -986,6 +820,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  initCircleGallery();
+  // ──────────────────────────────────────────────────────────────────────────
 
 });
 
