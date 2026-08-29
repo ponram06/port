@@ -630,7 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. CIRCULAR IMAGE GALLERY (Reference-Exact 3D Architecture) ───────────
+  // ─── 19. CIRCULAR IMAGE GALLERY (Reference-Exact Architecture + Intro) ─────
   function initCircleGallery() {
     const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
@@ -717,12 +717,38 @@ document.addEventListener("DOMContentLoaded", () => {
     })();
 
     const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
+    const cgPhrase = cgSection.querySelector('#cg-phrase');
     const cgCenterUI = cgSection.querySelector('#cg-center-ui');
     const cgCounter = cgSection.querySelector('#cg-counter');
     const cgTitle = cgSection.querySelector('#cg-title');
     const cgBtn = cgSection.querySelector('#cg-btn');
 
     const count = cgImgs.length;
+
+    // Wrap phrase words for blur-to-sharp reveal (Exact Reference Logic)
+    (function wrapPhraseWords(el) {
+      if (!el) return;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+      textNodes.forEach(function (node) {
+        const words = node.textContent.split(/(\s+)/);
+        const frag = document.createDocumentFragment();
+        words.forEach(function (w) {
+          if (/^\s+$/.test(w)) {
+            frag.appendChild(document.createTextNode(w));
+          } else if (w) {
+            const span = document.createElement('span');
+            span.className = 'word';
+            span.textContent = w;
+            frag.appendChild(span);
+          }
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+    })(cgPhrase);
+
+    const cgPhraseWords = cgPhrase ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
 
     // Reference-Exact 3D Trajectory Math
     const rx = Math.min(vw * 0.44, 650);
@@ -810,10 +836,51 @@ document.addEventListener("DOMContentLoaded", () => {
       onUpdate: function (self) {
         const progress = self.progress;
 
-        // 1. Authoritative active project index from scroll progress (Clamped 0 to 5)
-        const activeIdx = Math.min(count - 1, Math.max(0, Math.floor(progress * count)));
+        // 1. Reference Introductory Phrase Staging (0.00 to 0.18 progress)
+        const phraseStart = 0.0;
+        const phraseEnd = 0.18;
+        const travelY = 140;
 
-        // 2. Position all 6 3D project cards along reference trajectory getPos()
+        if (progress <= phraseEnd) {
+          const globalP = Math.max(0, Math.min(1, (progress - phraseStart) / (phraseEnd - phraseStart)));
+          const yOffset = travelY * (0.5 - globalP);
+          if (cgPhrase) {
+            cgPhrase.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
+            let alpha = 1;
+            if (globalP < 0.15) alpha = globalP / 0.15;
+            else if (globalP > 0.70) alpha = (1 - globalP) / 0.30;
+            cgPhrase.style.opacity = alpha;
+          }
+
+          cgPhraseWords.forEach(function (w, wi) {
+            if (globalP < 0.6) {
+              const revealP = globalP / 0.6;
+              const wordT = revealP * (cgPhraseWords.length + 4) - wi;
+              const wP = Math.max(0, Math.min(1, wordT / 3));
+              w.style.opacity = wP;
+              w.style.filter = 'blur(' + (8 * (1 - wP)).toFixed(1) + 'px)';
+            } else {
+              w.style.opacity = '1';
+              w.style.filter = 'blur(0px)';
+            }
+          });
+
+          if (cgCenterUI) {
+            cgCenterUI.style.opacity = '0';
+            cgCenterUI.style.pointerEvents = 'none';
+          }
+        } else {
+          if (cgPhrase) cgPhrase.style.opacity = '0';
+        }
+
+        // 2. Authoritative Project Selection (0.14 to 0.90 progress -> index 0 to 5)
+        let activeIdx = -1;
+        if (progress > 0.12) {
+          const galleryP = Math.max(0, Math.min(1, (progress - 0.14) / 0.74));
+          activeIdx = Math.min(count - 1, Math.max(0, Math.floor(galleryP * count)));
+        }
+
+        // 3. Position 3D project cards along reference trajectory getPos()
         cgImgs.forEach(function (img, i) {
           const imgT = progress * totalRange - i * stagger;
 
@@ -848,21 +915,10 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
 
-        // 3. Update floating center typography when active project changes
-        if (activeIdx !== currentActiveIdx) {
+        // 4. Update floating center typography when active project changes
+        if (activeIdx !== -1 && activeIdx !== currentActiveIdx) {
           currentActiveIdx = activeIdx;
           renderCenterUI(activeIdx);
-        }
-
-        // Gentle center typography vertical drift
-        const phraseStart = 0.15;
-        const phraseEnd = 0.85;
-        const travelY = 80;
-
-        if (progress >= phraseStart && progress <= phraseEnd) {
-          const globalP = (progress - phraseStart) / (phraseEnd - phraseStart);
-          const yOffset = travelY * (0.5 - globalP);
-          if (cgCenterUI) cgCenterUI.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
         }
       }
     });

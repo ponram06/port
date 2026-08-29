@@ -1027,7 +1027,7 @@ nav {
   .goal-card p { font-size: 0.85rem; }
 }
 
-/* ─── Circular Gallery Showcase (Compact Panel + Unobscured 3D Orbit) ─── */
+/* ─── Circular Gallery Showcase (Reference Architecture + Intro Phrase) ─── */
 .circle-gallery {
   position: relative;
   height: 600vh;
@@ -1048,7 +1048,7 @@ nav {
 
 .cg-img {
   position: absolute;
-  width: clamp(140px, 14vw, 210px);
+  width: clamp(150px, 13vw, 210px);
   aspect-ratio: 3/2;
   transform-style: preserve-3d;
   transition: filter 0.35s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.35s ease;
@@ -1063,110 +1063,95 @@ nav {
   will-change: transform;
 }
 
-/* Compact Center Project Information Panel (Secondary to 3D Orbit) */
-.cg-info-panel {
+/* Reference Introductory Statement */
+.cg-phrase {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.2vw, 3.2rem);
+  color: var(--text-primary);
+  text-align: center;
+  max-width: 640px;
+  line-height: 1.35;
+  will-change: opacity, transform;
+  z-index: 900;
+  pointer-events: none;
+}
+
+.cg-phrase .word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(8px);
+  will-change: opacity, filter;
+}
+
+.cg-accent {
+  color: var(--accent);
+}
+
+/* Minimal Floating Typography Center Project UI */
+.cg-center-ui {
   position: absolute;
   z-index: 500;
   text-align: center;
-  width: min(85vw, 480px);
-  max-height: 380px;
-  padding: 1.35rem 1.6rem;
-  background: rgba(8, 8, 8, 0.65);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-  pointer-events: auto;
-  will-change: transform, opacity;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.cg-info-panel:hover {
-  border-color: rgba(224, 255, 0, 0.4);
-  box-shadow: 0 20px 60px rgba(224, 255, 0, 0.12);
+  width: min(85vw, 460px);
+  padding: 0 1rem;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
 }
 
 .cg-counter {
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: clamp(0.75rem, 0.95vw, 0.92rem);
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--accent);
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
   text-transform: uppercase;
+  text-shadow: 0 0 15px var(--accent-glow);
 }
 
 .cg-title {
   font-family: var(--font-main);
-  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--text-primary);
-  margin-bottom: 0.4rem;
-  letter-spacing: -0.02em;
-}
-
-.cg-desc {
-  font-family: var(--font-main);
-  font-size: clamp(0.78rem, 0.9vw, 0.88rem);
-  line-height: 1.45;
-  color: var(--text-secondary);
-  margin-bottom: 0.75rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.cg-tags {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-bottom: 0.85rem;
-}
-
-.cg-tag {
-  font-family: var(--font-main);
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: clamp(1.6rem, 2.8vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.18;
+  color: #ffffff;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.22em 0.65em;
-  border-radius: 50px;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.1rem;
+  text-shadow: 0 4px 25px rgba(0, 0, 0, 0.95);
 }
 
-.cg-link {
+.cg-btn {
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   font-family: var(--font-display);
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--accent);
   text-decoration: none;
-  padding: 0.45em 1.1em;
+  padding: 0.48em 1.3em;
   border: 1px solid var(--accent);
   border-radius: 50px;
-  transition: all 0.3s ease;
+  background: transparent;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.cg-link:hover {
+.cg-btn:hover {
   background: var(--accent);
   color: #000;
+  transform: scale(1.05);
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
-.cg-arrow {
+.cg-btn-arrow {
   transition: transform 0.3s ease;
 }
 
-.cg-link:hover .cg-arrow {
+.cg-btn:hover .cg-btn-arrow {
   transform: translateX(4px);
 }
 
@@ -1185,7 +1170,7 @@ nav {
   .cg-img {
     position: relative;
     width: 100%;
-    max-width: 340px;
+    max-width: 320px;
     aspect-ratio: 3/2;
     opacity: 1 !important;
     transform: none !important;
@@ -1193,16 +1178,30 @@ nav {
     overflow: hidden;
     filter: none !important;
   }
-  .cg-info-panel {
+  .cg-phrase {
+    position: relative;
+    opacity: 1 !important;
+    transform: none !important;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+  .cg-phrase .word {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  .cg-center-ui {
     position: relative;
     opacity: 1 !important;
     transform: none !important;
     width: 100%;
-    max-width: 340px;
-    margin-top: 10px;
-    padding: 1.4rem 1.2rem;
+    margin-top: 15px;
+    padding: 0;
+  }
+  .cg-title {
+    font-size: 1.6rem;
   }
 }
+
 
 
 
