@@ -227,36 +227,57 @@
         </div>
       </section>
 
-      <!-- Projects Section: Reference-Exact 3D Circular Gallery -->
+      <!-- Projects Section: Reference-Exact 3D Circular Gallery Showcase -->
       <section class="circle-gallery" id="Projects">
         <div class="circle-gallery-pin" id="circle-gallery-pin">
-          <!-- 6 project cover images — SWAP src= to real screenshots when ready -->
+          
+          <!-- 6 Project Cover Images (Local path with Unsplash fallback) -->
           <img class="cg-img"
-               src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop"
-               alt="Smart Web Pentesting" width="1200" height="800">
+               src="images/project-pentest.jpeg"
+               data-fallback="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop"
+               alt="Smart Web Pentesting" width="1200" height="800"
+               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
           <img class="cg-img"
-               src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop"
-               alt="SkillBridge" width="1200" height="800">
+               src="images/project-skillbridge.jpeg"
+               data-fallback="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop"
+               alt="SkillBridge" width="1200" height="800"
+               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
           <img class="cg-img"
-               src="https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?q=80&w=1200&auto=format&fit=crop"
-               alt="NaviLens AR" width="1200" height="800">
+               src="images/project-navilens.jpeg"
+               data-fallback="https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?q=80&w=1200&auto=format&fit=crop"
+               alt="NaviLens AR" width="1200" height="800"
+               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
           <img class="cg-img"
-               src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop"
-               alt="Vaxi-Track" width="1200" height="800">
+               src="images/project-vaxitrack.jpeg"
+               data-fallback="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop"
+               alt="Vaxi-Track" width="1200" height="800"
+               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
           <img class="cg-img"
-               src="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=1200&auto=format&fit=crop"
-               alt="AI Cattle Recognition" width="1200" height="800">
+               src="images/project-cattle.jpeg"
+               data-fallback="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=1200&auto=format&fit=crop"
+               alt="AI Cattle Recognition" width="1200" height="800"
+               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
           <img class="cg-img"
-               src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
-               alt="Interactive Architectures" width="1200" height="800">
+               src="images/project-architectures.jpeg"
+               data-fallback="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
+               alt="Interactive Architectures" width="1200" height="800"
+               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
 
-          <!-- Center statement phrase -->
-          <p class="cg-phrase" id="cg-phrase">
-            Each project is a chance to
-            <span class="cg-accent">learn</span>,
-            <span class="cg-accent">experiment</span>
-            and push my limits.
-          </p>
+          <!-- Dynamic Center Project Information Panel -->
+          <div class="cg-info-panel" id="cg-info-panel">
+            <div class="cg-counter" id="cg-counter">PROJECTS</div>
+            <h3 class="cg-title" id="cg-title">Things I've built & experimented with</h3>
+            <p class="cg-desc" id="cg-desc">Scroll down to explore the interactive 3D portfolio showcase.</p>
+            <div class="cg-tags" id="cg-tags">
+              <span class="cg-tag">PORTFOLIO</span>
+              <span class="cg-tag">2026</span>
+              <span class="cg-tag">SHOWCASE</span>
+            </div>
+            <a href="https://github.com/ponram06" target="_blank" rel="noopener" class="cg-link" id="cg-link" style="display:none;">
+              VIEW PROJECT <span class="cg-arrow">→</span>
+            </a>
+          </div>
+
         </div>
       </section>
 

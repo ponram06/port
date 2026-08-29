@@ -630,10 +630,56 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. CIRCULAR IMAGE GALLERY (Reference Exact Implementation) ──────────
+  // ─── 19. CIRCULAR IMAGE GALLERY (Reference-Exact 3D Showcase) ────────────
   function initCircleGallery() {
     const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
+
+    // Real Projects Data Array (Max 6 Projects)
+    const PROJECTS_DATA = [
+      {
+        num: "01",
+        title: "Smart Web Pentesting",
+        desc: "Automated vulnerability assessment and penetration testing framework with intelligent risk classification and executive reporting.",
+        tags: ["Python", "Security", "OWASP", "Pentesting"],
+        link: "https://github.com/ponram06"
+      },
+      {
+        num: "02",
+        title: "SkillBridge",
+        desc: "Interactive peer-to-peer skill exchange platform bridging student expertise with real-world collaborative engineering projects.",
+        tags: ["JavaScript", "Node.js", "React", "MongoDB"],
+        link: "https://github.com/ponram06"
+      },
+      {
+        num: "03",
+        title: "NaviLens AR",
+        desc: "Augmented reality indoor navigation platform for accessible guidance, presented live at the U.S. Consulate Demo Day.",
+        tags: ["Snap AR", "Lens Studio", "JavaScript", "AR/VR"],
+        link: "https://github.com/ponram06"
+      },
+      {
+        num: "04",
+        title: "Vaxi-Track",
+        desc: "Real-time vaccine distribution tracking and cold-chain analytics dashboard (Top 10 Finalist at LICET EICON Ctrl+Alt+Hack).",
+        tags: ["Java", "Oracle SQL", "Analytics", "Web UI"],
+        link: "https://github.com/ponram06"
+      },
+      {
+        num: "05",
+        title: "AI Cattle Recognition",
+        desc: "Deep learning computer vision framework for automated livestock biometric identification and health tracking.",
+        tags: ["Python", "OpenCV", "PyTorch", "AI / ML"],
+        link: "https://github.com/ponram06"
+      },
+      {
+        num: "06",
+        title: "Interactive Architectures",
+        desc: "Experimental WebGL & GSAP 3D graphics pipeline pushing performance and creative boundaries of modern web browsers.",
+        tags: ["Three.js", "GSAP", "Canvas", "WebGL"],
+        link: "https://github.com/ponram06"
+      }
+    ];
 
     function isMobileViewport() {
       return window.innerWidth <= 768;
@@ -683,33 +729,14 @@ document.addEventListener("DOMContentLoaded", () => {
     })();
 
     const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
-    const cgPhrase = cgSection.querySelector('#cg-phrase') || document.getElementById('cg-phrase');
+    const cgInfoPanel = cgSection.querySelector('#cg-info-panel');
+    const cgCounter = cgSection.querySelector('#cg-counter');
+    const cgTitle = cgSection.querySelector('#cg-title');
+    const cgDesc = cgSection.querySelector('#cg-desc');
+    const cgTags = cgSection.querySelector('#cg-tags');
+    const cgLink = cgSection.querySelector('#cg-link');
+
     const count = cgImgs.length;
-
-    // Wrap phrase words for blur-to-sharp reveal
-    (function wrapPhraseWords(el) {
-      if (!el) return;
-      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      const textNodes = [];
-      while (walker.nextNode()) textNodes.push(walker.currentNode);
-      textNodes.forEach(function (node) {
-        const words = node.textContent.split(/(\s+)/);
-        const frag = document.createDocumentFragment();
-        words.forEach(function (w) {
-          if (/^\s+$/.test(w)) {
-            frag.appendChild(document.createTextNode(w));
-          } else if (w) {
-            const span = document.createElement('span');
-            span.className = 'word';
-            span.textContent = w;
-            frag.appendChild(span);
-          }
-        });
-        node.parentNode.replaceChild(frag, node);
-      });
-    })(cgPhrase);
-
-    const cgPhraseWords = cgPhrase ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
 
     const rx = vw * 0.34;
     const rz = 500;
@@ -755,6 +782,44 @@ document.addEventListener("DOMContentLoaded", () => {
     cgImgs.forEach(function (img) { img.style.opacity = '0'; });
 
     const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
+    let currentActiveIdx = -999;
+
+    function renderInfoPanel(idx) {
+      if (!cgInfoPanel) return;
+
+      gsap.to(cgInfoPanel, {
+        opacity: 0,
+        y: 12,
+        duration: 0.22,
+        ease: 'power2.in',
+        onComplete: function () {
+          if (idx === -1) {
+            if (cgCounter) cgCounter.textContent = 'PROJECTS';
+            if (cgTitle) cgTitle.textContent = "Things I've built & experimented with.";
+            if (cgDesc) cgDesc.textContent = "Scroll down to explore the 3D interactive showcase.";
+            if (cgTags) cgTags.innerHTML = '<span class="cg-tag">PORTFOLIO</span><span class="cg-tag">2026</span><span class="cg-tag">SHOWCASE</span>';
+            if (cgLink) cgLink.style.display = 'none';
+          } else {
+            const p = PROJECTS_DATA[idx] || PROJECTS_DATA[0];
+            if (cgCounter) cgCounter.textContent = p.num + ' / ' + String(PROJECTS_DATA.length).padStart(2, '0');
+            if (cgTitle) cgTitle.textContent = p.title;
+            if (cgDesc) cgDesc.textContent = p.desc;
+            if (cgTags) cgTags.innerHTML = p.tags.map(t => '<span class="cg-tag">' + t + '</span>').join('');
+            if (cgLink) {
+              cgLink.href = p.link;
+              cgLink.style.display = 'inline-flex';
+            }
+          }
+
+          gsap.to(cgInfoPanel, {
+            opacity: 1,
+            y: 0,
+            duration: 0.3,
+            ease: 'power2.out'
+          });
+        }
+      });
+    }
 
     ScrollTrigger.create({
       trigger: cgSection,
@@ -765,6 +830,35 @@ document.addEventListener("DOMContentLoaded", () => {
       onUpdate: function (self) {
         const progress = self.progress;
 
+        let maxZ = -Infinity;
+        let activeIdx = -1;
+
+        // Calculate positions and detect front-most active card
+        cgImgs.forEach(function (img, i) {
+          const imgT = progress * totalRange - i * stagger;
+
+          if (imgT <= 0 || imgT >= 1) {
+            img.style.opacity = '0';
+            return;
+          }
+
+          let alpha = 1;
+          if (imgT < 0.06) alpha = imgT / 0.06;
+          else if (imgT > 0.94) alpha = (1 - imgT) / 0.06;
+
+          const pos = getPos(imgT);
+
+          if (imgT >= 0.08 && imgT <= 0.92 && pos.z > maxZ) {
+            maxZ = pos.z;
+            activeIdx = i;
+          }
+        });
+
+        if (progress < 0.06 || progress > 0.94) {
+          activeIdx = -1;
+        }
+
+        // Apply 3D transforms & visual highlighting
         cgImgs.forEach(function (img, i) {
           const imgT = progress * totalRange - i * stagger;
 
@@ -780,42 +874,38 @@ document.addEventListener("DOMContentLoaded", () => {
           const pos = getPos(imgT);
           const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
 
-          img.style.transform =
-            'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-            ' rotateY(' + rotDeg + 'deg)';
-          img.style.opacity = alpha;
-          img.style.zIndex = Math.round(pos.z + 600);
+          if (i === activeIdx) {
+            img.style.transform =
+              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
+              ' rotateY(' + rotDeg + 'deg) scale(1.16)';
+            img.style.opacity = '1';
+            img.style.filter = 'blur(0px) brightness(1.15)';
+            img.style.zIndex = Math.round(pos.z + 1000);
+          } else {
+            img.style.transform =
+              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
+              ' rotateY(' + rotDeg + 'deg) scale(0.92)';
+            img.style.opacity = (alpha * 0.55).toFixed(2);
+            img.style.filter = 'blur(3px) brightness(0.65)';
+            img.style.zIndex = Math.round(pos.z + 600);
+          }
         });
 
-        const phraseStart = 0.25;
-        const phraseEnd = 0.75;
-        const travelY = 200;
+        // Update info panel when active project changes
+        if (activeIdx !== currentActiveIdx) {
+          currentActiveIdx = activeIdx;
+          renderInfoPanel(activeIdx);
+        }
 
-        if (progress < phraseStart || progress > phraseEnd) {
-          if (cgPhrase) cgPhrase.style.opacity = '0';
-        } else {
+        // Gentle center panel vertical drift
+        const phraseStart = 0.2;
+        const phraseEnd = 0.8;
+        const travelY = 160;
+
+        if (progress >= phraseStart && progress <= phraseEnd) {
           const globalP = (progress - phraseStart) / (phraseEnd - phraseStart);
           const yOffset = travelY * (0.5 - globalP);
-          if (cgPhrase) cgPhrase.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
-
-          const revealEnd = 0.4;
-          cgPhraseWords.forEach(function (w, wi) {
-            if (globalP < revealEnd) {
-              const revealP = globalP / revealEnd;
-              const wordT = revealP * (cgPhraseWords.length + 4) - wi;
-              const wP = Math.max(0, Math.min(1, wordT / 3));
-              w.style.opacity = wP;
-              w.style.filter = 'blur(' + (8 * (1 - wP)).toFixed(1) + 'px)';
-            } else {
-              w.style.opacity = '1';
-              w.style.filter = 'blur(0px)';
-            }
-          });
-
-          let alpha = 1;
-          if (globalP < 0.1) alpha = globalP / 0.1;
-          else if (globalP > 0.75) alpha = (1 - globalP) / 0.25;
-          if (cgPhrase) cgPhrase.style.opacity = alpha;
+          if (cgInfoPanel) cgInfoPanel.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
         }
       }
     });

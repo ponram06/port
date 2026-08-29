@@ -1027,7 +1027,7 @@ nav {
   .goal-card p { font-size: 0.85rem; }
 }
 
-/* ─── Circular Gallery Section (Reference-exact) ─── */
+/* ─── Circular Gallery Showcase (Reference-Exact 3D + Dynamic Info Panel) ─── */
 .circle-gallery {
   position: relative;
   height: 600vh;
@@ -1048,9 +1048,12 @@ nav {
 
 .cg-img {
   position: absolute;
-  width: clamp(140px, 16vw, 240px);
+  width: clamp(150px, 17vw, 250px);
   aspect-ratio: 3/2;
   transform-style: preserve-3d;
+  transition: filter 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
 }
 
 .cg-slice {
@@ -1060,62 +1063,139 @@ nav {
   will-change: transform;
 }
 
-.cg-phrase {
+/* Dynamic Center Project Information Panel */
+.cg-info-panel {
   position: absolute;
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3.2vw, 3rem);
-  color: var(--text-primary);
-  text-align: center;
-  max-width: 650px;
-  line-height: 1.3;
-  will-change: opacity, transform;
   z-index: 900;
-  pointer-events: none;
-  opacity: 0;
+  text-align: center;
+  width: min(90vw, 560px);
+  padding: 2.2rem 2.4rem;
+  background: rgba(8, 8, 8, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85);
+  pointer-events: auto;
+  will-change: transform, opacity;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-.cg-phrase .word {
-  display: inline-block;
-  opacity: 0;
-  filter: blur(8px);
+.cg-info-panel:hover {
+  border-color: rgba(224, 255, 0, 0.45);
+  box-shadow: 0 25px 80px rgba(224, 255, 0, 0.15);
 }
 
-.cg-accent {
+.cg-counter {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   color: var(--accent);
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+}
+
+.cg-title {
+  font-family: var(--font-main);
+  font-size: clamp(1.5rem, 2.6vw, 2.3rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  letter-spacing: -0.02em;
+}
+
+.cg-desc {
+  font-family: var(--font-main);
+  font-size: clamp(0.85rem, 1.05vw, 0.98rem);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+}
+
+.cg-tags {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+}
+
+.cg-tag {
+  font-family: var(--font-main);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.3em 0.75em;
+  border-radius: 50px;
+}
+
+.cg-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 0.65em 1.5em;
+  border: 1px solid var(--accent);
+  border-radius: 50px;
+  transition: all 0.3s ease;
+}
+
+.cg-link:hover {
+  background: var(--accent);
+  color: #000;
+  box-shadow: 0 0 25px var(--accent-glow);
+}
+
+.cg-arrow {
+  transition: transform 0.3s ease;
+}
+
+.cg-link:hover .cg-arrow {
+  transform: translateX(4px);
 }
 
 @media (max-width: 768px) {
   .circle-gallery {
     height: auto;
-    padding: 80px 20px;
+    padding: 60px 20px;
     overflow: visible;
   }
   .circle-gallery-pin {
     height: auto;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
     perspective: none;
   }
   .cg-img {
     position: relative;
     width: 100%;
-    max-width: 340px;
+    max-width: 360px;
     aspect-ratio: 3/2;
     opacity: 1 !important;
     transform: none !important;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
+    filter: none !important;
   }
-  .cg-phrase {
+  .cg-info-panel {
     position: relative;
     opacity: 1 !important;
     transform: none !important;
-    font-size: 1.4rem;
-    margin-top: 30px;
-  }
-  .cg-phrase .word {
-    opacity: 1 !important;
-    filter: none !important;
+    width: 100%;
+    margin-top: 15px;
+    padding: 1.8rem 1.5rem;
   }
 }
+
 
