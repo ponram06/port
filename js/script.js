@@ -759,7 +759,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function getPosForAngle(angle) {
       const x = Math.cos(angle) * rx;
       const z = Math.sin(angle) * rz;
-      const ry = angle - entryAngle;
+
+      // Subtle inward perspective tilt (-9deg to +9deg), NEVER flipping 90deg/180deg
+      const rotYDeg = (x / rx) * -9;
 
       // Protected Center Safe Zone Offset:
       // When image passes through center column (|x| < 320px), push Y offset away from center text
@@ -771,7 +773,7 @@ document.addEventListener("DOMContentLoaded", () => {
         x: x,
         y: (z / rz) * tiltY + verticalClearance,
         z: z,
-        rotY: ry
+        rotYDeg: rotYDeg
       };
     }
 
@@ -860,31 +862,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // 3. Position ALL 6 3D Project Cards around the continuous orbit
-        // All 6 cards remain on-screen in 3D orbit at all times!
-        const orbitAngleOffset = entryAngle - progress * Math.PI * 2.2;
-
+        // All 6 cards remain on-screen in 3D orbit at all times with subtle perspective tilt (-9° to +9°)
         cgImgs.forEach(function (img, i) {
           const baseAngle = entryAngle - (i / count) * Math.PI * 2;
           const cardAngle = baseAngle - progress * Math.PI * 2.2;
           const pos = getPosForAngle(cardAngle);
-          const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
 
           if (i === activeIdx && isGallery) {
-            // Active front card: sharp, bright, controlled scale
+            // Active front card: sharp, bright, upright facing front
             img.style.transform =
               'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
-              ' rotateY(' + rotDeg + 'deg) scale(1.14)';
+              ' rotateY(' + pos.rotYDeg.toFixed(1) + 'deg) scale(1.14)';
             img.style.opacity = '1';
             img.style.filter = 'blur(0px) brightness(1.2)';
             img.style.zIndex = Math.round(pos.z + 1000);
           } else {
-            // Background & side cards: smaller, dimmer, subtle blur (ALWAYS VISIBLE ON SCREEN)
+            // Background & side cards: smaller, dimmer, subtle 3D tilt (ALWAYS VISIBLE & UPRIGHT)
             let alpha = 0.75;
             if (pos.z < -200) alpha = 0.45;
 
             img.style.transform =
               'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-              ' rotateY(' + rotDeg + 'deg) scale(0.84)';
+              ' rotateY(' + pos.rotYDeg.toFixed(1) + 'deg) scale(0.84)';
             img.style.opacity = alpha.toFixed(2);
             img.style.filter = 'blur(1.5px) brightness(0.72)';
             img.style.zIndex = Math.round(pos.z + 200);
