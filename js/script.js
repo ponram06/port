@@ -630,48 +630,47 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. CIRCULAR IMAGE GALLERY (Reference-Exact 3D Showcase) ────────────
-  // ─── 19. CIRCULAR IMAGE GALLERY (Single Source of Truth Finite State Machine) ──
+  // ─── 19. CIRCULAR IMAGE GALLERY (Clean Single Source of Truth Finite FSM) ────
   function initCircleGallery() {
     const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
 
     if (window.innerWidth <= 768) return;
 
-    // Single Source of Truth for Projects Data
+    // Single Source of Truth for Project Data (6 Projects)
     const PROJECTS_DATA = [
       {
-        num: "01",
+        num: "01 / 06",
         title: "SMART WEB PENTESTING",
         image: "images/project-pentest.jpeg",
         github: "https://github.com/ponram06"
       },
       {
-        num: "02",
+        num: "02 / 06",
         title: "SKILLBRIDGE",
         image: "images/project-skillbridge.jpeg",
         github: "https://github.com/ponram06"
       },
       {
-        num: "03",
+        num: "03 / 06",
         title: "NAVILENS AR",
         image: "images/project-navilens.jpeg",
         github: "https://github.com/ponram06"
       },
       {
-        num: "04",
+        num: "04 / 06",
         title: "VAXI-TRACK",
         image: "images/project-vaxitrack.jpeg",
         github: "https://github.com/ponram06"
       },
       {
-        num: "05",
+        num: "05 / 06",
         title: "AI CATTLE RECOGNITION",
         image: "images/project-cattle.jpeg",
         github: "https://github.com/ponram06"
       },
       {
-        num: "06",
+        num: "06 / 06",
         title: "INTERACTIVE ARCHITECTURES",
         image: "images/project-architectures.jpeg",
         github: "https://github.com/ponram06"
@@ -686,9 +685,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Build cylindrical slices for image curvature
       (function buildSlices() {
         const SLICES = 10;
-        const imgW = Math.min(Math.max(130, vw * 0.15), 230);
+        const imgW = Math.min(Math.max(160, vw * 0.18), 280);
         const imgH = imgW * 2 / 3;
-        const orbitR = (vw * 0.38 + 520) / 2;
+        const orbitR = (vw * 0.40 + 560) / 2;
         const bendRad = imgW / orbitR;
         const cylR = orbitR;
         const sliceW = imgW / SLICES;
@@ -726,8 +725,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const cgCounter = cgSection.querySelector('#cg-counter');
       const cgTitle = cgSection.querySelector('#cg-title');
       const cgBtn = cgSection.querySelector('#cg-btn');
-      const cgActiveFrame = cgSection.querySelector('#cg-active-frame');
-      const cgActiveImg = cgSection.querySelector('#cg-active-img');
 
       const rx = Math.min(vw * 0.44, 650);
       const rz = 450;
@@ -777,26 +774,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         gsap.to(cgCenterUI, {
           opacity: 0,
-          y: 15,
-          filter: 'blur(6px)',
+          y: 12,
+          filter: 'blur(5px)',
           duration: 0.18,
           ease: 'power2.in',
           onComplete: function () {
-            if (idx === -1) {
-              if (cgCounter) cgCounter.textContent = 'PROJECTS';
-              if (cgTitle) cgTitle.textContent = 'THINGS I HAVE BUILT';
-              if (cgBtn) cgBtn.style.display = 'none';
-              if (cgActiveFrame) cgActiveFrame.style.display = 'none';
-            } else {
-              const p = PROJECTS_DATA[idx] || PROJECTS_DATA[0];
-              if (cgCounter) cgCounter.textContent = p.num + ' / 06';
-              if (cgTitle) cgTitle.textContent = p.title;
-              if (cgBtn) {
-                cgBtn.href = p.github;
-                cgBtn.style.display = 'inline-flex';
-              }
-              if (cgActiveFrame) cgActiveFrame.style.display = 'block';
-              if (cgActiveImg) cgActiveImg.src = p.image;
+            const p = PROJECTS_DATA[idx] || PROJECTS_DATA[0];
+            if (cgCounter) cgCounter.textContent = p.num;
+            if (cgTitle) cgTitle.textContent = p.title;
+            if (cgBtn) {
+              cgBtn.href = p.github;
+              cgBtn.style.display = 'inline-flex';
             }
 
             gsap.to(cgCenterUI, {
@@ -810,6 +798,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
+      // Initial render for Project 01
+      renderCenterUI(0);
+      currentActiveIdx = 0;
+
       ScrollTrigger.create({
         trigger: cgSection,
         start: 'top top',
@@ -819,32 +811,13 @@ document.addEventListener("DOMContentLoaded", () => {
         onUpdate: function (self) {
           const progress = self.progress;
 
-          // Single Source of Truth Finite State Machine:
-          // projectIndex: -1 (Intro) -> 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 (Final Outro) -> Exit
-          let projectIndex = -1;
-          if (progress < 0.12) {
-            projectIndex = -1; // -1: Intro ("THINGS I HAVE BUILT")
-          } else if (progress >= 0.12 && progress < 0.24) {
-            projectIndex = 0;  // 0: Project 01 ("SMART WEB PENTESTING")
-          } else if (progress >= 0.24 && progress < 0.36) {
-            projectIndex = 1;  // 1: Project 02 ("SKILLBRIDGE")
-          } else if (progress >= 0.36 && progress < 0.48) {
-            projectIndex = 2;  // 2: Project 03 ("NAVILENS AR")
-          } else if (progress >= 0.48 && progress < 0.60) {
-            projectIndex = 3;  // 3: Project 04 ("VAXI-TRACK")
-          } else if (progress >= 0.60 && progress < 0.72) {
-            projectIndex = 4;  // 4: Project 05 ("AI CATTLE RECOGNITION")
-          } else if (progress >= 0.72 && progress < 0.84) {
-            projectIndex = 5;  // 5: Project 06 ("INTERACTIVE ARCHITECTURES")
-          } else {
-            projectIndex = 6;  // 6: Final Outro ("THINGS I HAVE BUILT") -> Exit
-          }
+          // Deterministic Bounded Index Calculation (Zero modulo, zero infinite wrap):
+          // Math.min(5, Math.floor(progress * 6)) -> Maps progress smoothly across Projects 0..5
+          const activeIdx = Math.min(PROJECTS_DATA.length - 1, Math.floor(progress * PROJECTS_DATA.length));
 
-          const activeIdx = (projectIndex >= 0 && projectIndex < PROJECTS_DATA.length) ? projectIndex : -1;
-
-          // Compute bounded, non-looping 3D trajectory positions for images
+          // Compute 3D orbit trajectory positions for all 6 images
           cgImgs.forEach(function (img, i) {
-            const focalP = 0.18 + i * 0.12;
+            const focalP = (i + 0.5) / PROJECTS_DATA.length;
             const imgT = 0.5 + (progress - focalP) * 0.95;
 
             if (imgT <= 0 || imgT >= 1) {
@@ -860,39 +833,28 @@ document.addEventListener("DOMContentLoaded", () => {
             const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
 
             if (i === activeIdx) {
-              // Active project image: crisp, scale 1.14x, bright, highest Z-index
+              // Active front project image: sharp, full scale (220-280px), bright, highest Z-index
               img.style.transform =
                 'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
-                ' rotateY(' + rotDeg + 'deg) scale(1.14)';
+                ' rotateY(' + rotDeg + 'deg) scale(1.0)';
               img.style.opacity = '1';
               img.style.filter = 'blur(0px) brightness(1.2)';
               img.style.zIndex = Math.round(pos.z + 1000);
             } else {
-              // Non-active project images: supporting 3D orbit, scaled 0.85x, slight blur
+              // Inactive background orbit images: scaled down 0.75x, reduced opacity 0.35, subtle blur 2.5px
               img.style.transform =
                 'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-                ' rotateY(' + rotDeg + 'deg) scale(0.85)';
-              img.style.opacity = (alpha * 0.70).toFixed(2);
-              img.style.filter = 'blur(1.5px) brightness(0.72)';
+                ' rotateY(' + rotDeg + 'deg) scale(0.75)';
+              img.style.opacity = (alpha * 0.35).toFixed(2);
+              img.style.filter = 'blur(2.5px) brightness(0.65)';
               img.style.zIndex = Math.round(pos.z + 200);
             }
           });
 
-          // Trigger GSAP transition when active project state changes
+          // Trigger smooth title/counter/link transition when active index changes
           if (activeIdx !== currentActiveIdx) {
             currentActiveIdx = activeIdx;
             renderCenterUI(activeIdx);
-          }
-
-          // Subtle vertical drift for center typography
-          const phraseStart = 0.2;
-          const phraseEnd = 0.8;
-          const travelY = 80;
-
-          if (progress >= phraseStart && progress <= phraseEnd) {
-            const globalP = (progress - phraseStart) / (phraseEnd - phraseStart);
-            const yOffset = travelY * (0.5 - globalP);
-            if (cgCenterUI) cgCenterUI.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
           }
         }
       });
@@ -904,6 +866,3 @@ document.addEventListener("DOMContentLoaded", () => {
   // ──────────────────────────────────────────────────────────────────────────
 
 });
-
-
-
