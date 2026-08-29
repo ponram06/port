@@ -1,4 +1,4 @@
-﻿// ─── Smooth Scroll: Lenis + GSAP Ticker Sync ───────────────────────────────
+// ─── Smooth Scroll: Lenis + GSAP Ticker Sync ───────────────────────────────
 // Lenis drives all scroll momentum; GSAP's ticker calls lenis.raf() each frame
 // so ScrollTrigger reads Lenis positions, not native scroll positions.
 gsap.registerPlugin(ScrollTrigger);
@@ -630,7 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. 3D FLOATING MOCKUP HORIZON GALLERY (Luke Baffait Style) ──────────
+  // ─── 19. PROJECTS GALLERY — Luke Baffait exact scatter style ──────────────
   function initFloatingHorizonGallery() {
     const gallerySection = document.getElementById('Projects');
     if (!gallerySection) return;
@@ -638,148 +638,156 @@ document.addEventListener("DOMContentLoaded", () => {
     const mm = gsap.matchMedia();
 
     mm.add('(min-width: 769px)', () => {
-      const items = Array.from(gallerySection.querySelectorAll('.floating-mockup-item'));
+      const items   = Array.from(gallerySection.querySelectorAll('.floating-mockup-item'));
       const statement = gallerySection.querySelector('.gallery-statement');
-      const stage = gallerySection.querySelector('.floating-gallery-stage');
-
       if (!items.length) return;
 
-      // ─── Final "assembled" resting positions for each card ─────────────────
-      // These are the positions where each card LANDS after flying in.
-      // Spread loosely around centre, different depths/angles like in the screenshots.
-      const assembled = [
-        // card 0 — bottom-left large laptop
-        { left: '4%',  top: '55%', rotateY:  22, rotateX:  8,  scale: 1.05, zIndex: 15 },
-        // card 1 — top-left small monitor
-        { left: '6%',  top: '12%', rotateY:  28, rotateX: -6,  scale: 0.88, zIndex:  8 },
-        // card 2 — top-center tilted screen
-        { left: '38%', top: '6%',  rotateY: -10, rotateX: 16,  scale: 0.90, zIndex:  6 },
-        // card 3 — top-right laptop
-        { left: '72%', top: '10%', rotateY: -26, rotateX: -8,  scale: 0.92, zIndex:  7 },
-        // card 4 — bottom-right big laptop
-        { left: '65%', top: '54%', rotateY: -20, rotateX:  10, scale: 1.08, zIndex: 16 },
-        // card 5 — bottom-center
-        { left: '36%', top: '60%', rotateY:   4, rotateX: -12, scale: 0.85, zIndex: 12 },
+      /* ─────────────────────────────────────────────────────────────────────
+         FINAL RESTING POSITIONS  (matched pixel-by-pixel to the reference)
+         ─────────────────────────────────────────────────────────────────────
+         left/top  = position of the card's top-left corner in viewport %
+         rotateY   = horizontal 3D tilt  (+ = left face tilts toward you)
+         rotateX   = vertical 3D tilt    (+ = top tilts toward you)
+         scale     = perceived depth
+         zIndex    = layering (25 = in front of text, <25 = behind text)
+         w         = card width as vw units
+      ─────────────────────────────────────────────────────────────────────── */
+      const REST = [
+        // 0 — far-left bottom: large landscape laptop, partially off-left edge
+        { left: '-2vw',  top: '52%', rotateY: 20,  rotateX:  6,  scale: 1.0,  zIndex: 30, w: '28vw' },
+        // 1 — left column top: small portrait monitor
+        { left: '10vw',  top: '14%', rotateY: 24,  rotateX: -5,  scale: 0.70, zIndex: 10, w: '15vw' },
+        // 2 — left column mid: taller portrait screen (the coloured one)
+        { left: '9vw',   top: '38%', rotateY: 22,  rotateX:  4,  scale: 0.60, zIndex: 8,  w: '14vw' },
+        // 3 — center-left cluster: landscape screen overlapping text from left
+        { left: '26vw',  top: '18%', rotateY: -8,  rotateX: 14,  scale: 0.88, zIndex: 20, w: '22vw' },
+        // 4 — center-right cluster: landscape tilted right, overlapping text right
+        { left: '54vw',  top: '14%', rotateY: -28, rotateX: 10,  scale: 0.88, zIndex: 20, w: '22vw' },
+        // 5 — far-right: large landscape laptop, partially off-right edge
+        { left: '74vw',  top: '50%', rotateY: -18, rotateX:  8,  scale: 1.0,  zIndex: 30, w: '28vw' },
       ];
 
-      // ─── Offscreen starting positions (fly-in origins) ──────────────────────
-      const origins = [
-        { x: '-120vw', y:  '60vh', rotateY:  45, rotateX:  20, scale: 0.4 },
-        { x: '-100vw', y: '-80vh', rotateY:  50, rotateX: -20, scale: 0.4 },
-        { x:     '0',  y: '-90vh', rotateY: -10, rotateX:  40, scale: 0.4 },
-        { x:  '120vw', y: '-80vh', rotateY: -50, rotateX: -20, scale: 0.4 },
-        { x:  '100vw', y:  '60vh', rotateY: -45, rotateX:  20, scale: 0.4 },
-        { x:   '20vw', y: '100vh', rotateY:   5, rotateX: -40, scale: 0.4 },
+      /* ─────────────────────────────────────────────────────────────────────
+         FLY-IN ORIGINS  — where each card starts before animating in.
+         Each card comes from the edge nearest its resting position.
+      ─────────────────────────────────────────────────────────────────────── */
+      const ORIGIN = [
+        { x: '-100vw', y: '40vh',  rotateY: 35,  rotateX: 15,  scale: 0.3, opacity: 0 },
+        { x: '-80vw',  y: '-60vh', rotateY: 50,  rotateX:-18,  scale: 0.25, opacity: 0 },
+        { x: '-80vw',  y:  '0vh', rotateY: 48,  rotateX: 12,  scale: 0.25, opacity: 0 },
+        { x:   '0',   y: '-90vh', rotateY:  0,  rotateX: 45,  scale: 0.3, opacity: 0 },
+        { x:   '0',   y: '-90vh', rotateY: -5,  rotateX: 45,  scale: 0.3, opacity: 0 },
+        { x:  '100vw', y: '40vh',  rotateY:-35,  rotateX: 15,  scale: 0.3, opacity: 0 },
       ];
 
-      // Apply initial hidden+offscreen state to every card
+      // Stamp each card at its resting position but offset by its fly-in origin
       items.forEach((item, i) => {
-        const pos = assembled[i] || assembled[0];
-        const ori = origins[i]   || origins[0];
-        // Place card at its assembled x/y so CSS layout anchors it,
-        // then offset it far away via transform
+        const r = REST[i]   || REST[0];
+        const o = ORIGIN[i] || ORIGIN[0];
         gsap.set(item, {
-          left: pos.left,
-          top:  pos.top,
-          zIndex: pos.zIndex,
-          opacity: 0,
-          scale: ori.scale,
-          x: ori.x,
-          y: ori.y,
-          rotateY: ori.rotateY,
-          rotateX: ori.rotateX,
+          position: 'absolute',
+          left: r.left,
+          top:  r.top,
+          width: r.w,
+          zIndex: r.zIndex,
+          transformStyle: 'preserve-3d',
+          opacity: o.opacity,
+          scale:   o.scale,
+          x:       o.x,
+          y:       o.y,
+          rotateY: o.rotateY,
+          rotateX: o.rotateX,
         });
       });
 
-      // Statement hidden from the start
-      if (statement) {
-        gsap.set(statement, { opacity: 0, y: 40, scale: 0.88 });
-      }
+      // Text starts hidden — it appears AFTER all 6 cards land
+      if (statement) gsap.set(statement, { xPercent: -50, yPercent: -50, opacity: 0, y: 30, scale: 0.94 });
 
-      // ─── Build the master scrubbed timeline ─────────────────────────────────
-      // Total: 600% scroll distance
-      //   0%  – 70% : 6 cards fly in one by one  (each ~0.9 units apart)
-      //  70%  – 83% : text statement reveals in the center
-      //  83%  – 88% : brief hold (everything assembled + text visible)
-      //  88%  – 100%: clockwise spiral exit — cards + text swirl away
-      const N = items.length;           // 6
-      const FLY_STEP = 0.95;            // gap between each card arrival
-      const FLY_DURATION = 1.0;        // how long each card's fly-in lasts
-      const lastCardDone = (N - 1) * FLY_STEP + FLY_DURATION; // ≈ 5.75
-      const TEXT_START   = lastCardDone + 0.3;                 // ≈ 6.05
-      const TEXT_END     = TEXT_START + 1.2;                   // ≈ 7.25
-      const HOLD_END     = TEXT_END + 0.8;                     // ≈ 8.05
-      const EXIT_START   = HOLD_END;                           // ≈ 8.05
-      const EXIT_END     = EXIT_START + 2.5;                   // ≈ 10.55
+      /* ─────────────────────────────────────────────────────────────────────
+         TIMELINE MATH
+         Phase 1 (0 → lastDone): card 0 flies in, then card 1, … card 5
+         Phase 2 (lastDone+0.4 → lastDone+1.8): text reveals
+         Phase 3 (hold 1.2s)
+         Phase 4 (exit): clockwise rotation + scale down + blur → fade
+      ─────────────────────────────────────────────────────────────────────── */
+      const N           = items.length;   // 6
+      const STEP        = 1.0;            // scroll units between each card start
+      const FLY         = 1.1;            // duration of each card's fly-in
+      const lastDone    = (N - 1) * STEP + FLY;   // ≈ 6.1
+      const TEXT_IN     = lastDone + 0.4;           // ≈ 6.5
+      const HOLD_END    = TEXT_IN  + 2.0;           // ≈ 8.5
+      const EXIT        = HOLD_END;                  // ≈ 8.5
+      const EXIT_DUR    = 2.8;
+      const TOTAL       = EXIT + EXIT_DUR;           // ≈ 11.3
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: gallerySection,
           start: 'top top',
-          end: `+=${Math.ceil(EXIT_END * 120)}%`,   // ≈ 600%
-          scrub: 1.5,
+          end: `+=${Math.round(TOTAL * 110)}%`,
+          scrub: 1.8,
           pin: true,
           anticipatePin: 1,
         },
       });
 
-      // ── Phase 1: Cards fly in one by one ─────────────────────────────────────
+      // ── PHASE 1: Cards fly in one by one ─────────────────────────────────
       items.forEach((item, i) => {
-        const pos = assembled[i] || assembled[0];
+        const r = REST[i] || REST[0];
         tl.to(item, {
           opacity: 1,
           x: 0,
           y: 0,
-          scale: pos.scale,
-          rotateY: pos.rotateY,
-          rotateX: pos.rotateX,
-          duration: FLY_DURATION,
+          scale:   r.scale,
+          rotateY: r.rotateY,
+          rotateX: r.rotateX,
+          duration: FLY,
           ease: 'power3.out',
-        }, i * FLY_STEP);
+        }, i * STEP);
       });
 
-      // ── Phase 2: Text reveals AFTER all cards are in ─────────────────────────
+      // ── PHASE 2: Text reveals after ALL cards are settled ────────────────
       if (statement) {
         tl.to(statement, {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 1.2,
+          duration: 1.4,
           ease: 'power2.out',
-        }, TEXT_START);
+        }, TEXT_IN);
       }
 
-      // ── Phase 3: Clockwise spiral exit ───────────────────────────────────────
-      // The stage container rotates clockwise (+45deg) and everything scales up
-      // and fades/blurs out simultaneously.
+      // ── PHASE 3: HOLD — nothing moves (leave a gap in the timeline) ──────
+      tl.to({}, { duration: 1.2 }, TEXT_IN + 1.4);
 
-      // Each card spirals outward clockwise with slight offset between them
+      // ── PHASE 4: Clockwise spiral exit ───────────────────────────────────
+      // Cards individually spin clockwise and shrink/blur away
       items.forEach((item, i) => {
-        const angleOffset = (i / N) * 60;   // spread them around the clock face
+        const spreadAngle = (i / N) * 55; // stagger exit angles around clock
         tl.to(item, {
-          rotation: 45 + angleOffset,        // clockwise
-          scale: 0.3,
+          rotation: 50 + spreadAngle,     // clockwise = positive rotation
+          scale: 0.25,
           opacity: 0,
-          filter: 'blur(10px)',
-          transformOrigin: '50% 50%',
-          duration: 2.2,
+          filter: 'blur(12px)',
+          duration: EXIT_DUR,
           ease: 'power2.in',
-        }, EXIT_START + i * 0.06);           // tiny cascade so they don't all vanish at once
+        }, EXIT + i * 0.08);
       });
 
+      // Text blurs out in the middle of the exit
       if (statement) {
         tl.to(statement, {
           opacity: 0,
-          scale: 1.15,
-          y: -30,
-          filter: 'blur(8px)',
-          duration: 1.4,
+          y: -35,
+          scale: 1.12,
+          filter: 'blur(10px)',
+          duration: EXIT_DUR * 0.6,
           ease: 'power2.in',
-        }, EXIT_START + 0.4);
+        }, EXIT + 0.5);
       }
     });
 
-    // Mobile: simple static list, no scroll magic
+    // ── MOBILE: just show cards statically ───────────────────────────────────
     mm.add('(max-width: 768px)', () => {
       const items = gallerySection.querySelectorAll('.floating-mockup-item');
       const statement = gallerySection.querySelector('.gallery-statement');
@@ -792,8 +800,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // ──────────────────────────────────────────────────────────────────────────
 
 });
-
-
-
-
 
