@@ -616,74 +616,38 @@ document.addEventListener("DOMContentLoaded", () => {
       renderer.render(scene, camera);
     }
     renderLoop();
-
-    // Resize handling
-    window.addEventListener('resize', () => {
-      const w = getWidth();
-      const h = getHeight();
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    });
   }
 
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. CIRCULAR IMAGE GALLERY (Reference 3D Orbit + Finite Timeline) ────
+  // ─── 19. CIRCULAR IMAGE GALLERY (Pure Restored Reference Architecture) ────
   function initCircleGallery() {
     const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
 
     // Single Project Data Source (6 Projects)
     const PROJECTS_DATA = [
-      {
-        num: "01 / 06",
-        title: "SMART WEB PENTESTING",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "02 / 06",
-        title: "SKILLBRIDGE",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "03 / 06",
-        title: "NAVILENS AR",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "04 / 06",
-        title: "VAXI-TRACK",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "05 / 06",
-        title: "AI CATTLE RECOGNITION",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "06 / 06",
-        title: "INTERACTIVE ARCHITECTURES",
-        github: "https://github.com/ponram06"
-      }
+      { num: "01 / 06", title: "SMART WEB PENTESTING", github: "https://github.com/ponram06" },
+      { num: "02 / 06", title: "SKILLBRIDGE", github: "https://github.com/ponram06" },
+      { num: "03 / 06", title: "NAVILENS AR", github: "https://github.com/ponram06" },
+      { num: "04 / 06", title: "VAXI-TRACK", github: "https://github.com/ponram06" },
+      { num: "05 / 06", title: "AI CATTLE RECOGNITION", github: "https://github.com/ponram06" },
+      { num: "06 / 06", title: "INTERACTIVE ARCHITECTURES", github: "https://github.com/ponram06" }
     ];
 
-    function isMobileViewport() {
-      return window.innerWidth <= 768;
-    }
-
+    function isMobileViewport() { return window.innerWidth <= 768; }
     if (isMobileViewport()) return;
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    // Build cylindrical slices for image curvature (Exact Reference Logic)
+    // 1. Build 10 cylindrical 3D strip slices per image (Exact Reference Architecture)
     (function buildSlices() {
       const SLICES = 10;
-      const imgW = Math.min(Math.max(130, vw * 0.15), 210);
+      const imgW = Math.min(Math.max(120, vw * 0.095), 175);
       const imgH = imgW * 2 / 3;
-      const orbitR = (vw * 0.38 + 520) / 2;
+      const orbitR = (vw * 0.30 + 400) / 2;
       const bendRad = imgW / orbitR;
       const cylR = orbitR;
       const sliceW = imgW / SLICES;
@@ -691,7 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const stepDeg = totalBendDeg / SLICES;
 
       cgSection.querySelectorAll('.cg-img').forEach(function (img) {
-        if (img.tagName !== 'IMG') return; // Prevent double-slicing
+        if (img.tagName !== 'IMG') return;
         const src = img.getAttribute('src');
         const wrapper = document.createElement('div');
         wrapper.className = 'cg-img';
@@ -711,7 +675,6 @@ document.addEventListener("DOMContentLoaded", () => {
           sl.style.transform = 'rotateY(' + angle.toFixed(2) + 'deg)';
           wrapper.appendChild(sl);
         }
-
         img.parentNode.replaceChild(wrapper, img);
       });
     })();
@@ -725,7 +688,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const count = cgImgs.length;
 
-    // Wrap phrase words for blur-to-sharp reveal (Exact Reference Logic)
+    // 2. Wrap phrase words for blur-to-sharp reveal (Exact Reference Architecture)
     (function wrapPhraseWords(el) {
       if (!el) return;
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -735,9 +698,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const words = node.textContent.split(/(\s+)/);
         const frag = document.createDocumentFragment();
         words.forEach(function (w) {
-          if (/^\s+$/.test(w)) {
-            frag.appendChild(document.createTextNode(w));
-          } else if (w) {
+          if (/^\s+$/.test(w)) { frag.appendChild(document.createTextNode(w)); }
+          else if (w) {
             const span = document.createElement('span');
             span.className = 'word';
             span.textContent = w;
@@ -750,7 +712,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const cgPhraseWords = cgPhrase ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
 
-    // Responsive Safe Orbit Geometry (Guarantees no card touches or crosses viewport edges)
+    // 3. Responsive Safe Orbit Geometry (Guarantees zero card clipping outside viewport)
     const cardW = Math.min(Math.max(120, vw * 0.095), 175);
     const cardH = cardW * 2 / 3;
     const cardHalfW = cardW / 2;
@@ -759,7 +721,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const safeMarginX = 55;
     const safeMarginY = 45;
 
-    // Responsive safe orbit radius bounds:
     const maxSafeRx = (vw / 2) - cardHalfW - safeMarginX;
     const rx = Math.max(140, Math.min(maxSafeRx, vw * 0.32));
 
@@ -768,31 +729,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const rz = Math.min(420, rx * 0.85);
     const entryAngle = Math.PI / 2;
+    const offX = vw * 0.85;
 
+    // Reference-Exact 3D Trajectory Math with Safe Bounds
     function getPosForAngle(angle) {
       const x = Math.cos(angle) * rx;
       const z = Math.sin(angle) * rz;
 
-      // Subtle inward perspective tilt (-12deg to +12deg), clamped strictly, NEVER flipping
       const rotYDeg = Math.max(-12, Math.min(12, (x / rx) * -10));
 
-      // Protected Center Safe Zone Offset:
-      // When image passes through central content area (|x| < 300px), push Y offset away from text
       const distFromCenter = Math.abs(x);
       const centerFactor = 1 - Math.min(1, distFromCenter / 300);
       const verticalClearance = (z >= 0 ? 145 : -145) * centerFactor;
 
-      return {
-        x: x,
-        y: (z / rz) * tiltY + verticalClearance,
-        z: z,
-        rotYDeg: rotYDeg
-      };
+      return { x: x, y: (z / rz) * tiltY + verticalClearance, z: z, rotYDeg: rotYDeg };
     }
 
     const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
     let currentActiveIdx = -999;
-    let currentMode = 'NONE'; // 'INTRO', 'GALLERY', 'ENDING'
 
     function renderCenterUI(idx) {
       if (!cgCenterUI) return;
@@ -800,26 +754,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!p) return;
 
       gsap.to(cgCenterUI, {
-        opacity: 0,
-        y: 12,
-        filter: 'blur(5px)',
-        duration: 0.18,
-        ease: 'power2.in',
+        opacity: 0, y: 12, filter: 'blur(5px)', duration: 0.18, ease: 'power2.in',
         onComplete: function () {
           if (cgCounter) cgCounter.textContent = p.num;
           if (cgTitle) cgTitle.textContent = p.title;
-          if (cgBtn) {
-            cgBtn.href = p.github;
-            cgBtn.style.display = 'inline-flex';
-          }
-
-          gsap.to(cgCenterUI, {
-            opacity: 1,
-            y: 0,
-            filter: 'blur(0px)',
-            duration: 0.25,
-            ease: 'power2.out'
-          });
+          if (cgBtn) { cgBtn.href = p.github; cgBtn.style.display = 'inline-flex'; }
+          gsap.to(cgCenterUI, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.25, ease: 'power2.out' });
         }
       });
     }
@@ -832,50 +772,28 @@ document.addEventListener("DOMContentLoaded", () => {
       anticipatePin: 1,
       onUpdate: function (self) {
         const progress = self.progress;
-
-        // ─── FINITE TIMELINE STATES ───
-        // progress 0.00 - 0.10: STATE 0 (Intro Phrase)
-        // progress 0.10 - 0.85: GALLERY PHASE (Projects 01/06 -> 06/06)
-        // progress 0.85 - 1.00: FINAL STATE (Ending Phrase)
-
         const isIntro = progress <= 0.10;
         const isEnding = progress >= 0.85;
         const isGallery = !isIntro && !isEnding;
 
-        // 1. Staging Intro & Ending Phrase vs Project Center UI
         if (isIntro || isEnding) {
           const modeP = isIntro ? Math.max(0, Math.min(1, progress / 0.10)) : Math.max(0, Math.min(1, (progress - 0.85) / 0.15));
           if (cgPhrase) {
-            let alpha = 1;
-            if (isIntro) alpha = modeP < 0.2 ? modeP / 0.2 : (modeP > 0.8 ? (1 - modeP) / 0.2 : 1);
-            else alpha = modeP < 0.2 ? modeP / 0.2 : 1;
+            let alpha = isIntro ? (modeP < 0.2 ? modeP / 0.2 : (modeP > 0.8 ? (1 - modeP) / 0.2 : 1)) : (modeP < 0.2 ? modeP / 0.2 : 1);
             cgPhrase.style.opacity = alpha;
             cgPhrase.style.transform = 'translateY(' + (40 * (0.5 - modeP)).toFixed(1) + 'px)';
           }
-
-          cgPhraseWords.forEach(function (w) {
-            w.style.opacity = '1';
-            w.style.filter = 'blur(0px)';
-          });
-
-          if (cgCenterUI) {
-            cgCenterUI.style.opacity = '0';
-            cgCenterUI.style.pointerEvents = 'none';
-          }
+          if (cgCenterUI) { cgCenterUI.style.opacity = '0'; cgCenterUI.style.pointerEvents = 'none'; }
           currentActiveIdx = -999;
-        } else {
-          if (cgPhrase) cgPhrase.style.opacity = '0';
-        }
+        } else if (cgPhrase) cgPhrase.style.opacity = '0';
 
-        // 2. Determine Active Project Index during Gallery Phase (Clamped 0 to 5)
         let activeIdx = -1;
         if (isGallery) {
           const galleryP = Math.max(0, Math.min(1, (progress - 0.10) / 0.75));
           activeIdx = Math.min(count - 1, Math.max(0, Math.floor(galleryP * count)));
         }
 
-        // 3. Position ALL 6 3D Project Cards around the continuous orbit
-        // All 6 cards remain on-screen in 3D orbit at all times with subtle perspective tilt (-9° to +9°)
+        // 3. Position ALL 6 3D Project Cards around the continuous reference orbit
         cgImgs.forEach(function (img, i) {
           const baseAngle = entryAngle - (i / count) * Math.PI * 2;
           const cardAngle = baseAngle - progress * Math.PI * 2.2;
