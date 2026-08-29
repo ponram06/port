@@ -631,287 +631,279 @@ document.addEventListener("DOMContentLoaded", () => {
   // ──────────────────────────────────────────────────────────────────────────
 
   // ─── 19. CIRCULAR IMAGE GALLERY (Reference-Exact 3D Showcase) ────────────
+  // ─── 19. CIRCULAR IMAGE GALLERY (Single Source of Truth Finite State Machine) ──
   function initCircleGallery() {
     const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
 
-    // Real Projects Data Array (Max 6 Projects)
+    if (window.innerWidth <= 768) return;
+
+    // Single Source of Truth for Projects Data
     const PROJECTS_DATA = [
       {
         num: "01",
-        title: "Smart Web Pentesting",
-        desc: "Automated vulnerability assessment and penetration testing framework with intelligent risk classification and executive reporting.",
-        tags: ["Python", "Security", "OWASP", "Pentesting"],
-        link: "https://github.com/ponram06"
+        title: "SMART WEB PENTESTING",
+        image: "images/project-pentest.jpeg",
+        github: "https://github.com/ponram06"
       },
       {
         num: "02",
-        title: "SkillBridge",
-        desc: "Interactive peer-to-peer skill exchange platform bridging student expertise with real-world collaborative engineering projects.",
-        tags: ["JavaScript", "Node.js", "React", "MongoDB"],
-        link: "https://github.com/ponram06"
+        title: "SKILLBRIDGE",
+        image: "images/project-skillbridge.jpeg",
+        github: "https://github.com/ponram06"
       },
       {
         num: "03",
-        title: "NaviLens AR",
-        desc: "Augmented reality indoor navigation platform for accessible guidance, presented live at the U.S. Consulate Demo Day.",
-        tags: ["Snap AR", "Lens Studio", "JavaScript", "AR/VR"],
-        link: "https://github.com/ponram06"
+        title: "NAVILENS AR",
+        image: "images/project-navilens.jpeg",
+        github: "https://github.com/ponram06"
       },
       {
         num: "04",
-        title: "Vaxi-Track",
-        desc: "Real-time vaccine distribution tracking and cold-chain analytics dashboard (Top 10 Finalist at LICET EICON Ctrl+Alt+Hack).",
-        tags: ["Java", "Oracle SQL", "Analytics", "Web UI"],
-        link: "https://github.com/ponram06"
+        title: "VAXI-TRACK",
+        image: "images/project-vaxitrack.jpeg",
+        github: "https://github.com/ponram06"
       },
       {
         num: "05",
-        title: "AI Cattle Recognition",
-        desc: "Deep learning computer vision framework for automated livestock biometric identification and health tracking.",
-        tags: ["Python", "OpenCV", "PyTorch", "AI / ML"],
-        link: "https://github.com/ponram06"
+        title: "AI CATTLE RECOGNITION",
+        image: "images/project-cattle.jpeg",
+        github: "https://github.com/ponram06"
       },
       {
         num: "06",
-        title: "Interactive Architectures",
-        desc: "Experimental WebGL & GSAP 3D graphics pipeline pushing performance and creative boundaries of modern web browsers.",
-        tags: ["Three.js", "GSAP", "Canvas", "WebGL"],
-        link: "https://github.com/ponram06"
+        title: "INTERACTIVE ARCHITECTURES",
+        image: "images/project-architectures.jpeg",
+        github: "https://github.com/ponram06"
       }
     ];
 
-    function isMobileViewport() {
-      return window.innerWidth <= 768;
-    }
-
-    if (isMobileViewport()) return;
-
     const vw = window.innerWidth;
-    const vh = window.innerHeight;
 
-    // Build slices (cylindrical curvature)
-    (function buildSlices() {
-      const SLICES = 10;
-      const imgW = Math.min(Math.max(120, vw * 0.14), 210);
-      const imgH = imgW * 2 / 3;
-      const orbitR = (vw * 0.34 + 500) / 2;
-      const bendRad = imgW / orbitR;
-      const cylR = orbitR;
-      const sliceW = imgW / SLICES;
-      const totalBendDeg = bendRad * 180 / Math.PI;
-      const stepDeg = totalBendDeg / SLICES;
+    // Scoped GSAP context to prevent duplicate ScrollTriggers or handlers
+    const ctx = gsap.context(() => {
 
-      cgSection.querySelectorAll('.cg-img').forEach(function (img) {
-        if (img.tagName !== 'IMG') return; // Prevent double-slicing
-        const src = img.getAttribute('src');
-        const wrapper = document.createElement('div');
-        wrapper.className = 'cg-img';
+      // Build cylindrical slices for image curvature
+      (function buildSlices() {
+        const SLICES = 10;
+        const imgW = Math.min(Math.max(130, vw * 0.15), 230);
+        const imgH = imgW * 2 / 3;
+        const orbitR = (vw * 0.38 + 520) / 2;
+        const bendRad = imgW / orbitR;
+        const cylR = orbitR;
+        const sliceW = imgW / SLICES;
+        const totalBendDeg = bendRad * 180 / Math.PI;
+        const stepDeg = totalBendDeg / SLICES;
 
-        for (let s = 0; s < SLICES; s++) {
-          const sl = document.createElement('div');
-          sl.className = 'cg-slice';
-          const displayW = sliceW + 1.5;
-          sl.style.width = displayW.toFixed(1) + 'px';
-          sl.style.left = '50%';
-          sl.style.marginLeft = (-displayW / 2).toFixed(1) + 'px';
-          sl.style.backgroundImage = 'url("' + src + '")';
-          sl.style.backgroundSize = imgW.toFixed(1) + 'px ' + imgH.toFixed(1) + 'px';
-          sl.style.backgroundPosition = (-s * sliceW).toFixed(1) + 'px 0';
-          sl.style.transformOrigin = '50% 50% ' + (-cylR).toFixed(1) + 'px';
-          const angle = (s - (SLICES - 1) / 2) * stepDeg;
-          sl.style.transform = 'rotateY(' + angle.toFixed(2) + 'deg)';
-          wrapper.appendChild(sl);
+        cgSection.querySelectorAll('.cg-img').forEach(function (img) {
+          if (img.tagName !== 'IMG') return; // Prevent double-slicing
+          const src = img.getAttribute('src');
+          const wrapper = document.createElement('div');
+          wrapper.className = 'cg-img';
+
+          for (let s = 0; s < SLICES; s++) {
+            const sl = document.createElement('div');
+            sl.className = 'cg-slice';
+            const displayW = sliceW + 1.5;
+            sl.style.width = displayW.toFixed(1) + 'px';
+            sl.style.left = '50%';
+            sl.style.marginLeft = (-displayW / 2).toFixed(1) + 'px';
+            sl.style.backgroundImage = 'url("' + src + '")';
+            sl.style.backgroundSize = imgW.toFixed(1) + 'px ' + imgH.toFixed(1) + 'px';
+            sl.style.backgroundPosition = (-s * sliceW).toFixed(1) + 'px 0';
+            sl.style.transformOrigin = '50% 50% ' + (-cylR).toFixed(1) + 'px';
+            const angle = (s - (SLICES - 1) / 2) * stepDeg;
+            sl.style.transform = 'rotateY(' + angle.toFixed(2) + 'deg)';
+            wrapper.appendChild(sl);
+          }
+
+          img.parentNode.replaceChild(wrapper, img);
+        });
+      })();
+
+      const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
+      const cgCenterUI = cgSection.querySelector('#cg-center-ui');
+      const cgCounter = cgSection.querySelector('#cg-counter');
+      const cgTitle = cgSection.querySelector('#cg-title');
+      const cgBtn = cgSection.querySelector('#cg-btn');
+      const cgActiveFrame = cgSection.querySelector('#cg-active-frame');
+      const cgActiveImg = cgSection.querySelector('#cg-active-img');
+
+      const rx = Math.min(vw * 0.44, 650);
+      const rz = 450;
+      const tiltY = 135;
+      const entryAngle = Math.PI / 2;
+      const offX = vw * 0.90;
+
+      function getPos(t) {
+        if (t <= 0.12) {
+          const p = Math.max(0, t / 0.12);
+          return {
+            x: -offX * (1 - p),
+            y: tiltY,
+            z: rz * p,
+            rotY: 0
+          };
         }
-
-        img.parentNode.replaceChild(wrapper, img);
-      });
-    })();
-
-    const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
-    const cgInfoPanel = cgSection.querySelector('#cg-info-panel');
-    const cgCounter = cgSection.querySelector('#cg-counter');
-    const cgTitle = cgSection.querySelector('#cg-title');
-    const cgDesc = cgSection.querySelector('#cg-desc');
-    const cgTags = cgSection.querySelector('#cg-tags');
-    const cgLink = cgSection.querySelector('#cg-link');
-
-    const count = cgImgs.length;
-
-    const rx = Math.min(vw * 0.38, 560);
-    const rz = 450;
-    const tiltY = vw <= 768 ? 60 : 120;
-    const entryAngle = Math.PI / 2;
-    const offX = vw * 0.88;
-
-    function getPos(t) {
-      if (t <= 0.12) {
-        const p = t / 0.12;
+        if (t <= 0.88) {
+          const p = (t - 0.12) / 0.76;
+          const angle = entryAngle - p * Math.PI * 2;
+          const x = Math.cos(angle) * rx;
+          const z = Math.sin(angle) * rz;
+          const ry = p * Math.PI * 2;
+          return {
+            x: x,
+            y: (z / rz) * tiltY,
+            z: z,
+            rotY: ry
+          };
+        }
+        const p = Math.min(1, (t - 0.88) / 0.12);
         return {
-          x: -offX * (1 - p),
+          x: offX * p,
           y: tiltY,
-          z: rz * p,
-          rotY: 0
+          z: rz * (1 - p),
+          rotY: Math.PI * 2
         };
       }
-      if (t <= 0.88) {
-        const p = (t - 0.12) / 0.76;
-        const angle = entryAngle - p * Math.PI * 2;
-        const x = Math.cos(angle) * rx;
-        const z = Math.sin(angle) * rz;
-        const ry = p * Math.PI * 2;
-        return {
-          x: x,
-          y: (z / rz) * tiltY,
-          z: z,
-          rotY: ry
-        };
-      }
-      const p = (t - 0.88) / 0.12;
-      return {
-        x: offX * p,
-        y: tiltY,
-        z: rz * (1 - p),
-        rotY: Math.PI * 2
-      };
-    }
 
-    const stagger = 0.09;
-    const totalRange = 1 + stagger * (count - 1);
+      cgImgs.forEach(function (img) { img.style.opacity = '0'; });
 
-    cgImgs.forEach(function (img) { img.style.opacity = '0'; });
+      const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
+      let currentActiveIdx = -999;
 
-    const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
-    let currentActiveIdx = -999;
+      function renderCenterUI(idx) {
+        if (!cgCenterUI) return;
 
-    function renderInfoPanel(idx) {
-      if (!cgInfoPanel) return;
-
-      gsap.to(cgInfoPanel, {
-        opacity: 0,
-        y: 10,
-        duration: 0.2,
-        ease: 'power2.in',
-        onComplete: function () {
-          if (idx === -1) {
-            if (cgCounter) cgCounter.textContent = 'PROJECTS';
-            if (cgTitle) cgTitle.textContent = "Things I've built, experimented with & learned from.";
-            if (cgDesc) cgDesc.textContent = "Scroll down to explore the 3D interactive portfolio orbit.";
-            if (cgTags) cgTags.innerHTML = '<span class="cg-tag">PORTFOLIO</span><span class="cg-tag">2026</span><span class="cg-tag">SCROLL TO EXPLORE ↓</span>';
-            if (cgLink) cgLink.style.display = 'none';
-          } else {
-            const p = PROJECTS_DATA[idx] || PROJECTS_DATA[0];
-            if (cgCounter) cgCounter.textContent = p.num + ' / ' + String(PROJECTS_DATA.length).padStart(2, '0');
-            if (cgTitle) cgTitle.textContent = p.title;
-            if (cgDesc) cgDesc.textContent = p.desc;
-            if (cgTags) cgTags.innerHTML = p.tags.map(t => '<span class="cg-tag">' + t + '</span>').join('');
-            if (cgLink) {
-              cgLink.href = p.link;
-              cgLink.style.display = 'inline-flex';
+        gsap.to(cgCenterUI, {
+          opacity: 0,
+          y: 15,
+          filter: 'blur(6px)',
+          duration: 0.18,
+          ease: 'power2.in',
+          onComplete: function () {
+            if (idx === -1) {
+              if (cgCounter) cgCounter.textContent = 'PROJECTS';
+              if (cgTitle) cgTitle.textContent = 'THINGS I HAVE BUILT';
+              if (cgBtn) cgBtn.style.display = 'none';
+              if (cgActiveFrame) cgActiveFrame.style.display = 'none';
+            } else {
+              const p = PROJECTS_DATA[idx] || PROJECTS_DATA[0];
+              if (cgCounter) cgCounter.textContent = p.num + ' / 06';
+              if (cgTitle) cgTitle.textContent = p.title;
+              if (cgBtn) {
+                cgBtn.href = p.github;
+                cgBtn.style.display = 'inline-flex';
+              }
+              if (cgActiveFrame) cgActiveFrame.style.display = 'block';
+              if (cgActiveImg) cgActiveImg.src = p.image;
             }
+
+            gsap.to(cgCenterUI, {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              duration: 0.25,
+              ease: 'power2.out'
+            });
+          }
+        });
+      }
+
+      ScrollTrigger.create({
+        trigger: cgSection,
+        start: 'top top',
+        end: 'bottom bottom',
+        pin: pinEl,
+        anticipatePin: 1,
+        onUpdate: function (self) {
+          const progress = self.progress;
+
+          // Single Source of Truth Finite State Machine:
+          // projectIndex: -1 (Intro) -> 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 (Final Outro) -> Exit
+          let projectIndex = -1;
+          if (progress < 0.12) {
+            projectIndex = -1; // -1: Intro ("THINGS I HAVE BUILT")
+          } else if (progress >= 0.12 && progress < 0.24) {
+            projectIndex = 0;  // 0: Project 01 ("SMART WEB PENTESTING")
+          } else if (progress >= 0.24 && progress < 0.36) {
+            projectIndex = 1;  // 1: Project 02 ("SKILLBRIDGE")
+          } else if (progress >= 0.36 && progress < 0.48) {
+            projectIndex = 2;  // 2: Project 03 ("NAVILENS AR")
+          } else if (progress >= 0.48 && progress < 0.60) {
+            projectIndex = 3;  // 3: Project 04 ("VAXI-TRACK")
+          } else if (progress >= 0.60 && progress < 0.72) {
+            projectIndex = 4;  // 4: Project 05 ("AI CATTLE RECOGNITION")
+          } else if (progress >= 0.72 && progress < 0.84) {
+            projectIndex = 5;  // 5: Project 06 ("INTERACTIVE ARCHITECTURES")
+          } else {
+            projectIndex = 6;  // 6: Final Outro ("THINGS I HAVE BUILT") -> Exit
           }
 
-          gsap.to(cgInfoPanel, {
-            opacity: 1,
-            y: 0,
-            duration: 0.28,
-            ease: 'power2.out'
+          const activeIdx = (projectIndex >= 0 && projectIndex < PROJECTS_DATA.length) ? projectIndex : -1;
+
+          // Compute bounded, non-looping 3D trajectory positions for images
+          cgImgs.forEach(function (img, i) {
+            const focalP = 0.18 + i * 0.12;
+            const imgT = 0.5 + (progress - focalP) * 0.95;
+
+            if (imgT <= 0 || imgT >= 1) {
+              img.style.opacity = '0';
+              return;
+            }
+
+            let alpha = 1;
+            if (imgT < 0.08) alpha = imgT / 0.08;
+            else if (imgT > 0.92) alpha = (1 - imgT) / 0.08;
+
+            const pos = getPos(imgT);
+            const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
+
+            if (i === activeIdx) {
+              // Active project image: crisp, scale 1.14x, bright, highest Z-index
+              img.style.transform =
+                'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
+                ' rotateY(' + rotDeg + 'deg) scale(1.14)';
+              img.style.opacity = '1';
+              img.style.filter = 'blur(0px) brightness(1.2)';
+              img.style.zIndex = Math.round(pos.z + 1000);
+            } else {
+              // Non-active project images: supporting 3D orbit, scaled 0.85x, slight blur
+              img.style.transform =
+                'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
+                ' rotateY(' + rotDeg + 'deg) scale(0.85)';
+              img.style.opacity = (alpha * 0.70).toFixed(2);
+              img.style.filter = 'blur(1.5px) brightness(0.72)';
+              img.style.zIndex = Math.round(pos.z + 200);
+            }
           });
+
+          // Trigger GSAP transition when active project state changes
+          if (activeIdx !== currentActiveIdx) {
+            currentActiveIdx = activeIdx;
+            renderCenterUI(activeIdx);
+          }
+
+          // Subtle vertical drift for center typography
+          const phraseStart = 0.2;
+          const phraseEnd = 0.8;
+          const travelY = 80;
+
+          if (progress >= phraseStart && progress <= phraseEnd) {
+            const globalP = (progress - phraseStart) / (phraseEnd - phraseStart);
+            const yOffset = travelY * (0.5 - globalP);
+            if (cgCenterUI) cgCenterUI.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
+          }
         }
       });
-    }
 
-    ScrollTrigger.create({
-      trigger: cgSection,
-      start: 'top top',
-      end: 'bottom bottom',
-      pin: pinEl,
-      anticipatePin: 1,
-      onUpdate: function (self) {
-        const progress = self.progress;
-
-        let maxZ = -Infinity;
-        let activeIdx = -1;
-
-        // Calculate positions and detect front-most active card
-        cgImgs.forEach(function (img, i) {
-          const imgT = progress * totalRange - i * stagger;
-
-          if (imgT <= 0 || imgT >= 1) {
-            img.style.opacity = '0';
-            return;
-          }
-
-          const pos = getPos(imgT);
-
-          if (imgT >= 0.08 && imgT <= 0.92 && pos.z > maxZ) {
-            maxZ = pos.z;
-            activeIdx = i;
-          }
-        });
-
-        if (progress < 0.06 || progress > 0.94) {
-          activeIdx = -1;
-        }
-
-        // Apply 3D transforms & visual priority highlighting
-        cgImgs.forEach(function (img, i) {
-          const imgT = progress * totalRange - i * stagger;
-
-          if (imgT <= 0 || imgT >= 1) {
-            img.style.opacity = '0';
-            return;
-          }
-
-          let alpha = 1;
-          if (imgT < 0.06) alpha = imgT / 0.06;
-          else if (imgT > 0.94) alpha = (1 - imgT) / 0.06;
-
-          const pos = getPos(imgT);
-          const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
-
-          if (i === activeIdx) {
-            // Front active card: enlarged, sharp, bright, highest Z-index
-            img.style.transform =
-              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 50).toFixed(1) + 'px)' +
-              ' rotateY(' + rotDeg + 'deg) scale(1.18)';
-            img.style.opacity = '1';
-            img.style.filter = 'blur(0px) brightness(1.2)';
-            img.style.zIndex = Math.round(pos.z + 1000);
-          } else {
-            // Side & background cards: smaller, dimmer, subtle blur
-            img.style.transform =
-              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-              ' rotateY(' + rotDeg + 'deg) scale(0.88)';
-            img.style.opacity = (alpha * 0.70).toFixed(2);
-            img.style.filter = 'blur(2px) brightness(0.70)';
-            img.style.zIndex = Math.round(pos.z + 200);
-          }
-        });
-
-        // Update info panel when active project changes
-        if (activeIdx !== currentActiveIdx) {
-          currentActiveIdx = activeIdx;
-          renderInfoPanel(activeIdx);
-        }
-
-        // Gentle center panel vertical drift
-        const phraseStart = 0.2;
-        const phraseEnd = 0.8;
-        const travelY = 120;
-
-        if (progress >= phraseStart && progress <= phraseEnd) {
-          const globalP = (progress - phraseStart) / (phraseEnd - phraseStart);
-          const yOffset = travelY * (0.5 - globalP);
-          if (cgInfoPanel) cgInfoPanel.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
-        }
-      }
-    });
+    }, cgSection);
   }
 
   initCircleGallery();
   // ──────────────────────────────────────────────────────────────────────────
 
 });
+
 
 
