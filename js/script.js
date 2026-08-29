@@ -630,239 +630,247 @@ document.addEventListener("DOMContentLoaded", () => {
   initThreeScene();
   // ──────────────────────────────────────────────────────────────────────────
 
-  // ─── 19. CIRCULAR IMAGE GALLERY (Clean Single Source of Truth Finite FSM) ────
+  // ─── 19. CIRCULAR IMAGE GALLERY (Reference-Exact 3D Architecture) ───────────
   function initCircleGallery() {
     const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
     if (!cgSection) return;
 
-    if (window.innerWidth <= 768) return;
-
-    // Single Source of Truth for Project Data (6 Projects)
+    // Single Project Data Source (6 Projects)
     const PROJECTS_DATA = [
       {
         num: "01 / 06",
         title: "SMART WEB PENTESTING",
-        image: "images/project-pentest.jpeg",
         github: "https://github.com/ponram06"
       },
       {
         num: "02 / 06",
         title: "SKILLBRIDGE",
-        image: "images/project-skillbridge.jpeg",
         github: "https://github.com/ponram06"
       },
       {
         num: "03 / 06",
         title: "NAVILENS AR",
-        image: "images/project-navilens.jpeg",
         github: "https://github.com/ponram06"
       },
       {
         num: "04 / 06",
         title: "VAXI-TRACK",
-        image: "images/project-vaxitrack.jpeg",
         github: "https://github.com/ponram06"
       },
       {
         num: "05 / 06",
         title: "AI CATTLE RECOGNITION",
-        image: "images/project-cattle.jpeg",
         github: "https://github.com/ponram06"
       },
       {
         num: "06 / 06",
         title: "INTERACTIVE ARCHITECTURES",
-        image: "images/project-architectures.jpeg",
         github: "https://github.com/ponram06"
       }
     ];
 
+    function isMobileViewport() {
+      return window.innerWidth <= 768;
+    }
+
+    if (isMobileViewport()) return;
+
     const vw = window.innerWidth;
+    const vh = window.innerHeight;
 
-    // Scoped GSAP context to prevent duplicate ScrollTriggers or handlers
-    const ctx = gsap.context(() => {
+    // Build cylindrical slices for image curvature (Exact Reference Logic)
+    (function buildSlices() {
+      const SLICES = 10;
+      const imgW = Math.min(Math.max(130, vw * 0.15), 220);
+      const imgH = imgW * 2 / 3;
+      const orbitR = (vw * 0.38 + 520) / 2;
+      const bendRad = imgW / orbitR;
+      const cylR = orbitR;
+      const sliceW = imgW / SLICES;
+      const totalBendDeg = bendRad * 180 / Math.PI;
+      const stepDeg = totalBendDeg / SLICES;
 
-      // Build cylindrical slices for image curvature
-      (function buildSlices() {
-        const SLICES = 10;
-        const imgW = Math.min(Math.max(160, vw * 0.18), 280);
-        const imgH = imgW * 2 / 3;
-        const orbitR = (vw * 0.40 + 560) / 2;
-        const bendRad = imgW / orbitR;
-        const cylR = orbitR;
-        const sliceW = imgW / SLICES;
-        const totalBendDeg = bendRad * 180 / Math.PI;
-        const stepDeg = totalBendDeg / SLICES;
+      cgSection.querySelectorAll('.cg-img').forEach(function (img) {
+        if (img.tagName !== 'IMG') return; // Prevent double-slicing
+        const src = img.getAttribute('src');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cg-img';
 
-        cgSection.querySelectorAll('.cg-img').forEach(function (img) {
-          if (img.tagName !== 'IMG') return; // Prevent double-slicing
-          const src = img.getAttribute('src');
-          const wrapper = document.createElement('div');
-          wrapper.className = 'cg-img';
-
-          for (let s = 0; s < SLICES; s++) {
-            const sl = document.createElement('div');
-            sl.className = 'cg-slice';
-            const displayW = sliceW + 1.5;
-            sl.style.width = displayW.toFixed(1) + 'px';
-            sl.style.left = '50%';
-            sl.style.marginLeft = (-displayW / 2).toFixed(1) + 'px';
-            sl.style.backgroundImage = 'url("' + src + '")';
-            sl.style.backgroundSize = imgW.toFixed(1) + 'px ' + imgH.toFixed(1) + 'px';
-            sl.style.backgroundPosition = (-s * sliceW).toFixed(1) + 'px 0';
-            sl.style.transformOrigin = '50% 50% ' + (-cylR).toFixed(1) + 'px';
-            const angle = (s - (SLICES - 1) / 2) * stepDeg;
-            sl.style.transform = 'rotateY(' + angle.toFixed(2) + 'deg)';
-            wrapper.appendChild(sl);
-          }
-
-          img.parentNode.replaceChild(wrapper, img);
-        });
-      })();
-
-      const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
-      const cgCenterUI = cgSection.querySelector('#cg-center-ui');
-      const cgCounter = cgSection.querySelector('#cg-counter');
-      const cgTitle = cgSection.querySelector('#cg-title');
-      const cgBtn = cgSection.querySelector('#cg-btn');
-
-      const rx = Math.min(vw * 0.44, 650);
-      const rz = 450;
-      const tiltY = 135;
-      const entryAngle = Math.PI / 2;
-      const offX = vw * 0.90;
-
-      function getPos(t) {
-        if (t <= 0.12) {
-          const p = Math.max(0, t / 0.12);
-          return {
-            x: -offX * (1 - p),
-            y: tiltY,
-            z: rz * p,
-            rotY: 0
-          };
+        for (let s = 0; s < SLICES; s++) {
+          const sl = document.createElement('div');
+          sl.className = 'cg-slice';
+          const displayW = sliceW + 1.5;
+          sl.style.width = displayW.toFixed(1) + 'px';
+          sl.style.left = '50%';
+          sl.style.marginLeft = (-displayW / 2).toFixed(1) + 'px';
+          sl.style.backgroundImage = 'url("' + src + '")';
+          sl.style.backgroundSize = imgW.toFixed(1) + 'px ' + imgH.toFixed(1) + 'px';
+          sl.style.backgroundPosition = (-s * sliceW).toFixed(1) + 'px 0';
+          sl.style.transformOrigin = '50% 50% ' + (-cylR).toFixed(1) + 'px';
+          const angle = (s - (SLICES - 1) / 2) * stepDeg;
+          sl.style.transform = 'rotateY(' + angle.toFixed(2) + 'deg)';
+          wrapper.appendChild(sl);
         }
-        if (t <= 0.88) {
-          const p = (t - 0.12) / 0.76;
-          const angle = entryAngle - p * Math.PI * 2;
-          const x = Math.cos(angle) * rx;
-          const z = Math.sin(angle) * rz;
-          const ry = p * Math.PI * 2;
-          return {
-            x: x,
-            y: (z / rz) * tiltY,
-            z: z,
-            rotY: ry
-          };
-        }
-        const p = Math.min(1, (t - 0.88) / 0.12);
+
+        img.parentNode.replaceChild(wrapper, img);
+      });
+    })();
+
+    const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
+    const cgCenterUI = cgSection.querySelector('#cg-center-ui');
+    const cgCounter = cgSection.querySelector('#cg-counter');
+    const cgTitle = cgSection.querySelector('#cg-title');
+    const cgBtn = cgSection.querySelector('#cg-btn');
+
+    const count = cgImgs.length;
+
+    // Reference-Exact 3D Trajectory Math
+    const rx = Math.min(vw * 0.44, 650);
+    const rz = 450;
+    const tiltY = vw <= 768 ? 60 : 135;
+    const entryAngle = Math.PI / 2;
+    const offX = vw * 0.90;
+
+    function getPos(t) {
+      if (t <= 0.12) {
+        const p = t / 0.12;
         return {
-          x: offX * p,
+          x: -offX * (1 - p),
           y: tiltY,
-          z: rz * (1 - p),
-          rotY: Math.PI * 2
+          z: rz * p,
+          rotY: 0
         };
       }
-
-      cgImgs.forEach(function (img) { img.style.opacity = '0'; });
-
-      const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
-      let currentActiveIdx = -999;
-
-      function renderCenterUI(idx) {
-        if (!cgCenterUI) return;
-
-        gsap.to(cgCenterUI, {
-          opacity: 0,
-          y: 12,
-          filter: 'blur(5px)',
-          duration: 0.18,
-          ease: 'power2.in',
-          onComplete: function () {
-            const p = PROJECTS_DATA[idx] || PROJECTS_DATA[0];
-            if (cgCounter) cgCounter.textContent = p.num;
-            if (cgTitle) cgTitle.textContent = p.title;
-            if (cgBtn) {
-              cgBtn.href = p.github;
-              cgBtn.style.display = 'inline-flex';
-            }
-
-            gsap.to(cgCenterUI, {
-              opacity: 1,
-              y: 0,
-              filter: 'blur(0px)',
-              duration: 0.25,
-              ease: 'power2.out'
-            });
-          }
-        });
+      if (t <= 0.88) {
+        const p = (t - 0.12) / 0.76;
+        const angle = entryAngle - p * Math.PI * 2;
+        const x = Math.cos(angle) * rx;
+        const z = Math.sin(angle) * rz;
+        const ry = p * Math.PI * 2;
+        return {
+          x: x,
+          y: (z / rz) * tiltY,
+          z: z,
+          rotY: ry
+        };
       }
+      const p = (t - 0.88) / 0.12;
+      return {
+        x: offX * p,
+        y: tiltY,
+        z: rz * (1 - p),
+        rotY: Math.PI * 2
+      };
+    }
 
-      // Initial render for Project 01
-      renderCenterUI(0);
-      currentActiveIdx = 0;
+    const stagger = 0.09;
+    const totalRange = 1 + stagger * (count - 1);
 
-      ScrollTrigger.create({
-        trigger: cgSection,
-        start: 'top top',
-        end: 'bottom bottom',
-        pin: pinEl,
-        anticipatePin: 1,
-        onUpdate: function (self) {
-          const progress = self.progress;
+    cgImgs.forEach(function (img) { img.style.opacity = '0'; });
 
-          // Deterministic Bounded Index Calculation (Zero modulo, zero infinite wrap):
-          // Math.min(5, Math.floor(progress * 6)) -> Maps progress smoothly across Projects 0..5
-          const activeIdx = Math.min(PROJECTS_DATA.length - 1, Math.floor(progress * PROJECTS_DATA.length));
+    const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
+    let currentActiveIdx = -999;
 
-          // Compute 3D orbit trajectory positions for all 6 images
-          cgImgs.forEach(function (img, i) {
-            const focalP = (i + 0.5) / PROJECTS_DATA.length;
-            const imgT = 0.5 + (progress - focalP) * 0.95;
+    function renderCenterUI(idx) {
+      if (!cgCenterUI) return;
+      const p = PROJECTS_DATA[idx];
+      if (!p) return;
 
-            if (imgT <= 0 || imgT >= 1) {
-              img.style.opacity = '0';
-              return;
-            }
-
-            let alpha = 1;
-            if (imgT < 0.08) alpha = imgT / 0.08;
-            else if (imgT > 0.92) alpha = (1 - imgT) / 0.08;
-
-            const pos = getPos(imgT);
-            const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
-
-            if (i === activeIdx) {
-              // Active front project image: sharp, full scale (220-280px), bright, highest Z-index
-              img.style.transform =
-                'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
-                ' rotateY(' + rotDeg + 'deg) scale(1.0)';
-              img.style.opacity = '1';
-              img.style.filter = 'blur(0px) brightness(1.2)';
-              img.style.zIndex = Math.round(pos.z + 1000);
-            } else {
-              // Inactive background orbit images: scaled down 0.75x, reduced opacity 0.35, subtle blur 2.5px
-              img.style.transform =
-                'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-                ' rotateY(' + rotDeg + 'deg) scale(0.75)';
-              img.style.opacity = (alpha * 0.35).toFixed(2);
-              img.style.filter = 'blur(2.5px) brightness(0.65)';
-              img.style.zIndex = Math.round(pos.z + 200);
-            }
-          });
-
-          // Trigger smooth title/counter/link transition when active index changes
-          if (activeIdx !== currentActiveIdx) {
-            currentActiveIdx = activeIdx;
-            renderCenterUI(activeIdx);
+      gsap.to(cgCenterUI, {
+        opacity: 0,
+        y: 12,
+        filter: 'blur(5px)',
+        duration: 0.18,
+        ease: 'power2.in',
+        onComplete: function () {
+          if (cgCounter) cgCounter.textContent = p.num;
+          if (cgTitle) cgTitle.textContent = p.title;
+          if (cgBtn) {
+            cgBtn.href = p.github;
+            cgBtn.style.display = 'inline-flex';
           }
+
+          gsap.to(cgCenterUI, {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: 0.25,
+            ease: 'power2.out'
+          });
         }
       });
+    }
 
-    }, cgSection);
+    ScrollTrigger.create({
+      trigger: cgSection,
+      start: 'top top',
+      end: 'bottom bottom',
+      pin: pinEl,
+      anticipatePin: 1,
+      onUpdate: function (self) {
+        const progress = self.progress;
+
+        // 1. Authoritative active project index from scroll progress (Clamped 0 to 5)
+        const activeIdx = Math.min(count - 1, Math.max(0, Math.floor(progress * count)));
+
+        // 2. Position all 6 3D project cards along reference trajectory getPos()
+        cgImgs.forEach(function (img, i) {
+          const imgT = progress * totalRange - i * stagger;
+
+          if (imgT <= 0 || imgT >= 1) {
+            img.style.opacity = '0';
+            return;
+          }
+
+          let alpha = 1;
+          if (imgT < 0.06) alpha = imgT / 0.06;
+          else if (imgT > 0.94) alpha = (1 - imgT) / 0.06;
+
+          const pos = getPos(imgT);
+          const rotDeg = (pos.rotY * 180 / Math.PI).toFixed(1);
+
+          if (i === activeIdx) {
+            // Active front card: sharp, bright, controlled scale
+            img.style.transform =
+              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
+              ' rotateY(' + rotDeg + 'deg) scale(1.14)';
+            img.style.opacity = '1';
+            img.style.filter = 'blur(0px) brightness(1.2)';
+            img.style.zIndex = Math.round(pos.z + 1000);
+          } else {
+            // Background/side cards: smaller, dimmer, subtle blur
+            img.style.transform =
+              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
+              ' rotateY(' + rotDeg + 'deg) scale(0.85)';
+            img.style.opacity = (alpha * 0.70).toFixed(2);
+            img.style.filter = 'blur(1.5px) brightness(0.72)';
+            img.style.zIndex = Math.round(pos.z + 200);
+          }
+        });
+
+        // 3. Update floating center typography when active project changes
+        if (activeIdx !== currentActiveIdx) {
+          currentActiveIdx = activeIdx;
+          renderCenterUI(activeIdx);
+        }
+
+        // Gentle center typography vertical drift
+        const phraseStart = 0.15;
+        const phraseEnd = 0.85;
+        const travelY = 80;
+
+        if (progress >= phraseStart && progress <= phraseEnd) {
+          const globalP = (progress - phraseStart) / (phraseEnd - phraseStart);
+          const yOffset = travelY * (0.5 - globalP);
+          if (cgCenterUI) cgCenterUI.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px)';
+        }
+      }
+    });
   }
 
   initCircleGallery();
   // ──────────────────────────────────────────────────────────────────────────
 
 });
+
+

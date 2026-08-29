@@ -1027,7 +1027,7 @@ nav {
   .goal-card p { font-size: 0.85rem; }
 }
 
-/* ─── Circular Gallery Showcase (Clean 3D Orbit & Controlled Typography) ─── */
+/* ─── Circular Gallery Showcase (Compact Panel + Unobscured 3D Orbit) ─── */
 .circle-gallery {
   position: relative;
   height: 600vh;
@@ -1046,16 +1046,14 @@ nav {
   perspective: 1200px;
 }
 
-/* 3D Orbit Gallery Project Images */
 .cg-img {
   position: absolute;
-  width: clamp(220px, 18vw, 280px);
+  width: clamp(140px, 14vw, 210px);
   aspect-ratio: 3/2;
   transform-style: preserve-3d;
-  transition: filter 0.35s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.35s ease, box-shadow 0.35s ease;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);
-  border-radius: 10px;
-  overflow: hidden;
+  transition: filter 0.35s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.35s ease;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
 }
 
 .cg-slice {
@@ -1065,76 +1063,110 @@ nav {
   will-change: transform;
 }
 
-/* Center Control & Typography UI (Clean & Spaced) */
-.cg-center-ui {
+/* Compact Center Project Information Panel (Secondary to 3D Orbit) */
+.cg-info-panel {
   position: absolute;
   z-index: 500;
   text-align: center;
-  width: min(90vw, 680px);
-  padding: 0 1rem;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  will-change: transform, opacity, filter;
+  width: min(85vw, 480px);
+  max-height: 380px;
+  padding: 1.35rem 1.6rem;
+  background: rgba(8, 8, 8, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  pointer-events: auto;
+  will-change: transform, opacity;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cg-info-panel:hover {
+  border-color: rgba(224, 255, 0, 0.4);
+  box-shadow: 0 20px 60px rgba(224, 255, 0, 0.12);
 }
 
 .cg-counter {
   font-family: var(--font-display);
-  font-size: clamp(0.9rem, 1.1vw, 1.15rem); /* 16–20px desktop */
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--accent);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
   text-transform: uppercase;
-  text-shadow: 0 0 15px var(--accent-glow);
 }
 
 .cg-title {
   font-family: var(--font-main);
-  font-size: clamp(2.2rem, 3.8vw, 3.4rem); /* 48–64px desktop */
-  font-weight: 800;
-  line-height: 1.15;
-  color: #ffffff;
-  text-transform: uppercase;
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
   letter-spacing: -0.02em;
-  margin-bottom: 1.2rem;
-  text-shadow: 0 4px 25px rgba(0, 0, 0, 0.95);
 }
 
-.cg-btn {
-  pointer-events: auto;
+.cg-desc {
+  font-family: var(--font-main);
+  font-size: clamp(0.78rem, 0.9vw, 0.88rem);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cg-tags {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.cg-tag {
+  font-family: var(--font-main);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.22em 0.65em;
+  border-radius: 50px;
+}
+
+.cg-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.4rem;
-  width: clamp(150px, 12vw, 180px);
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: var(--accent);
   text-decoration: none;
-  padding: 0.5em 1.2em;
+  padding: 0.45em 1.1em;
   border: 1px solid var(--accent);
   border-radius: 50px;
-  background: transparent;
-  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.cg-btn:hover {
+.cg-link:hover {
   background: var(--accent);
   color: #000;
-  transform: scale(1.05);
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
-.cg-btn-arrow {
+.cg-arrow {
   transition: transform 0.3s ease;
 }
 
-.cg-btn:hover .cg-btn-arrow {
+.cg-link:hover .cg-arrow {
   transform: translateX(4px);
 }
 
@@ -1153,7 +1185,7 @@ nav {
   .cg-img {
     position: relative;
     width: 100%;
-    max-width: 320px;
+    max-width: 340px;
     aspect-ratio: 3/2;
     opacity: 1 !important;
     transform: none !important;
@@ -1161,15 +1193,16 @@ nav {
     overflow: hidden;
     filter: none !important;
   }
-  .cg-center-ui {
+  .cg-info-panel {
     position: relative;
     opacity: 1 !important;
     transform: none !important;
     width: 100%;
-    margin-top: 15px;
-    padding: 0;
-  }
-  .cg-title {
-    font-size: 1.8rem;
+    max-width: 340px;
+    margin-top: 10px;
+    padding: 1.4rem 1.2rem;
   }
 }
+
+
+
