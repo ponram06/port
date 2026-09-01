@@ -1,0 +1,10 @@
+# Temporary / Test files
+New folder (2)/
+*.mp4
+*.java
+js/hero-scroll.js
+reference.css
+reference.html
+reference.js
+.DS_Store
+Thumbs.db

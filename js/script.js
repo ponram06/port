@@ -118,89 +118,332 @@ animateCanvas();
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ─── 1. PRELOADER INTRO SEQUENCE (name reveal → slide-up wipe) ───────────
+  // ─── 1. PRELOADER (unchanged logic) ─────────────────────────────────────
   const loader         = document.getElementById('loader');
   const preloaderSans  = document.querySelector('.preloader-sans');
   const preloaderSerif = document.querySelector('.preloader-serif');
 
-  // Safety net: if GSAP never fires (e.g. script error), remove loader after 10s
   const loaderSafetyTimer = setTimeout(() => {
-    if (loader) { loader.style.display = 'none'; }
-    ScrollTrigger.refresh();
-    initHeroEntry();
+    if (loader) loader.style.display = 'none';
+    initHeroCinematicScroll();
   }, 10000);
 
-  const preloaderTl = gsap.timeline({
+  gsap.timeline({
     onComplete: () => {
       clearTimeout(loaderSafetyTimer);
-      ScrollTrigger.refresh();
-      // Hero entry begins only after the overlay is gone
-      initHeroEntry();
+      // Small delay so ScrollTrigger can measure DOM before building timeline
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+        initHeroCinematicScroll();
+      });
     }
-  });
-
-  // 1. "PONRAM" (sans-serif) enters from below
-  preloaderTl.fromTo(
-    preloaderSans,
-    { y: 20, opacity: 0 },
-    { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' }
-  )
-  // 2. "P." (italic serif) enters ~0.15s after sans begins
-  .fromTo(
-    preloaderSerif,
-    { y: 20, opacity: 0 },
-    { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' },
-    '-=0.85'
-  )
-  // 3. Hold for ~0.6s so name is legible
+  })
+  .fromTo(preloaderSans,  { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' })
+  .fromTo(preloaderSerif, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' }, '-=0.85')
   .to({}, { duration: 0.6 })
-  // 4. Slide entire loader overlay up off-screen
-  .to(loader, {
-    yPercent: -100,
-    duration: 0.9,
-    ease: 'power4.inOut',
-    onComplete: () => { loader.style.display = 'none'; }
-  });
+  .to(loader, { yPercent: -100, duration: 0.9, ease: 'power4.inOut', onComplete: () => { loader.style.display = 'none'; } });
 
-  // Hero elements animate in sequentially after preloader clears
-  let hasEnteredHero = false;
-  function initHeroEntry() {
-    if (hasEnteredHero) return;
-    hasEnteredHero = true;
+  // ─── 2. HERO CINEMATIC SCROLL SEQUENCE (5-IMAGE SEQUENCE) ──────────────────
+  const STAGE_1 = 0.0;
+  const STAGE_2 = 0.25;
+  const STAGE_3 = 0.40;
+  const STAGE_4 = 0.55;
+  const STAGE_5 = 0.75;
+  const STAGE_6 = 0.95;
+  const STAGE_7 = 1.0;
 
-    const heroTl = gsap.timeline({
-      defaults: { ease: 'power4.out' },
-      onComplete: () => {
-        // Scroll indicator line pulse starts only once the indicator is visible
-        gsap.to('.scroll-indicator .line', {
-          scaleX: 1.8, duration: 1.5, repeat: -1, yoyo: true, ease: 'sine.inOut',
-          delay: 0.5,
-        });
+  function initHeroCinematicScroll() {
+    const wrap       = document.getElementById('hero-scroll-wrapper');
+    const intro      = document.getElementById('Intro');
+    const nameLeft   = document.getElementById('hero-name-left');
+    const nameRight  = document.getElementById('hero-name-right');
+    const contentBox = document.getElementById('hero-content-box');
+    const imagesBox  = document.getElementById('hero-images-container');
+    const overlay    = document.getElementById('hero-vignette-overlay');
+    const scrollHint = document.getElementById('hero-scroll-hint');
+    const aboutMe    = document.getElementById('about-me-reveal');
+
+    // Select stage images
+    const img1 = document.getElementById('hero-img-1');
+    const img2 = document.getElementById('hero-img-2');
+    const img3 = document.getElementById('hero-img-3');
+    const img4 = document.getElementById('hero-img-4');
+    const img5 = document.getElementById('hero-img-5');
+
+    if (!wrap || !intro || !nameLeft || !nameRight || !contentBox || !imagesBox || !overlay || !scrollHint || !aboutMe || !img1 || !img2 || !img3 || !img4 || !img5) {
+      console.warn('[Hero] Required elements missing for 5-image cinematic scroll.');
+      return;
+    }
+
+    const SHOW_DEBUG_READOUT = false; // Toggle to true during build debugging
+
+    // Create debug readout if enabled
+    let debugDiv = null;
+    if (SHOW_DEBUG_READOUT) {
+      debugDiv = document.createElement('div');
+      debugDiv.style.cssText = 'position:fixed; bottom:20px; right:20px; background:rgba(0,0,0,0.85); color:#e0ff00; padding:12px; font-family:monospace; font-size:11px; border:1px solid #e0ff00; border-radius:4px; z-index:99999; pointer-events:none; line-height:1.4;';
+      document.body.appendChild(debugDiv);
+    }
+
+    // Image preloading using image.decode() to avoid flash/pop-in
+    const imagesToPreload = [
+      'images/1.png',
+      'images/2.png',
+      'images/3.png',
+      'images/4.png',
+      'images/5.png'
+    ];
+    let imagesPreloaded = false;
+    let preloadedCount = 0;
+
+    imagesToPreload.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      img.decode().then(() => {
+        preloadedCount++;
+        if (preloadedCount === imagesToPreload.length) {
+          imagesPreloaded = true;
+          console.log('[Hero] All 5 keyframe images preloaded successfully.');
+        }
+      }).catch((err) => {
+        console.warn('[Hero] Failed to preload:', src, err);
+      });
+    });
+
+    // Easing utility
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    // Dynamic split distances
+    const vw = window.innerWidth;
+    const isMobile = vw <= 768;
+    const splitXDistance = isMobile ? vw * 0.22 : vw * 0.28;
+    const splitXDistanceMax = isMobile ? vw * 0.38 : vw * 0.48;
+    const cinematicScaleMax = isMobile ? 2.5 : 2.0;
+
+    // Initial state setup
+    gsap.set(nameLeft,   { x: 0, opacity: 1 });
+    gsap.set(nameRight,  { x: 0, opacity: 1 });
+    gsap.set(contentBox, { y: '22vh' });
+    gsap.set(imagesBox,  { scale: 0.08, opacity: 0, borderRadius: '12px' });
+    gsap.set(overlay,    { opacity: 0 });
+    gsap.set(scrollHint, { opacity: 1 });
+    gsap.set(aboutMe,    { opacity: 0, y: 50 });
+
+    let targetProgress = 0;
+    let smoothedProgress = 0;
+    const lerpFactor = 0.08;
+
+    // Central frame renderer mapping smoothedProgress (p) directly
+    function updateHeroVisuals(p) {
+      // 1. Text split & opacity fade
+      let nameX = 0;
+      let nameOpacity = 1;
+      if (p <= STAGE_2) {
+        let localP = p / STAGE_2;
+        let eased = easeInOutCubic(localP);
+        nameX = splitXDistance * eased;
+        nameOpacity = 1.0 - 0.6 * eased; // 1.0 -> 0.4
+      } else if (p > STAGE_2 && p <= STAGE_4) {
+        let localP = (p - STAGE_2) / (STAGE_4 - STAGE_2);
+        let eased = easeInOutCubic(localP);
+        nameX = splitXDistance + (splitXDistanceMax - splitXDistance) * eased;
+        nameOpacity = 0.4 - 0.35 * eased; // 0.4 -> 0.05
+      } else {
+        let localP = Math.min(1.0, (p - STAGE_4) / (STAGE_5 - STAGE_4));
+        let eased = easeInOutCubic(localP);
+        nameX = splitXDistanceMax + (splitXDistanceMax * 0.2) * eased;
+        nameOpacity = Math.max(0, 0.05 - 0.05 * eased); // 0.05 -> 0.00
+      }
+      gsap.set(nameLeft,  { x: -nameX, opacity: nameOpacity });
+      gsap.set(nameRight, { x: nameX, opacity: nameOpacity });
+
+      // 2. Image container scale & border-radius
+      let containerScale = 0;
+      let containerOpacity = 0;
+      let borderRadius = 12;
+
+      if (p <= STAGE_2) {
+        let eased = easeInOutCubic(p / STAGE_2);
+        containerScale = 0.08 + (0.35 - 0.08) * eased;
+        containerOpacity = eased;
+        borderRadius = 12;
+      } else if (p > STAGE_2 && p <= STAGE_3) {
+        let eased = easeInOutCubic((p - STAGE_2) / (STAGE_3 - STAGE_2));
+        containerScale = 0.35 + (0.55 - 0.35) * eased;
+        containerOpacity = 1.0;
+        borderRadius = 12;
+      } else if (p > STAGE_3 && p <= STAGE_4) {
+        let eased = easeInOutCubic((p - STAGE_3) / (STAGE_4 - STAGE_3));
+        containerScale = 0.55 + (0.80 - 0.55) * eased;
+        containerOpacity = 1.0;
+        borderRadius = 12;
+      } else if (p > STAGE_4 && p <= STAGE_5) {
+        let eased = easeInOutCubic((p - STAGE_4) / (STAGE_5 - STAGE_4));
+        containerScale = 0.80 + (1.1 - 0.80) * eased;
+        containerOpacity = 1.0;
+        borderRadius = 12 - 6 * eased;
+      } else if (p > STAGE_5 && p <= STAGE_6) {
+        let eased = easeInOutCubic((p - STAGE_5) / (STAGE_6 - STAGE_5));
+        containerScale = 1.1 + (cinematicScaleMax - 1.1) * eased;
+        containerOpacity = 1.0;
+        borderRadius = 6 - 6 * eased;
+      } else {
+        containerScale = cinematicScaleMax;
+        containerOpacity = 1.0;
+        borderRadius = 0;
+      }
+
+      gsap.set(imagesBox, {
+        scale: containerScale,
+        opacity: containerOpacity,
+        borderRadius: borderRadius + 'px'
+      });
+
+      // 3. Image crossfades & subtle scale drift
+      const imgOpacities = [0, 0, 0, 0, 0];
+      const imgScales = [1, 1, 1, 1, 1];
+
+      if (p <= STAGE_2) {
+        imgOpacities[0] = 1;
+        imgScales[0] = 1;
+      } else if (p > STAGE_2 && p <= STAGE_3) {
+        let localP = (p - STAGE_2) / (STAGE_3 - STAGE_2);
+        let easedP = easeInOutCubic(localP);
+        imgOpacities[0] = 1.0 - easedP;
+        imgScales[0] = 1.0 - 0.03 * easedP;
+        imgOpacities[1] = easedP;
+        imgScales[1] = 1.03 - 0.03 * easedP;
+      } else if (p > STAGE_3 && p <= STAGE_4) {
+        let localP = (p - STAGE_3) / (STAGE_4 - STAGE_3);
+        let easedP = easeInOutCubic(localP);
+        imgOpacities[1] = 1.0 - easedP;
+        imgScales[1] = 1.0 - 0.03 * easedP;
+        imgOpacities[2] = easedP;
+        imgScales[2] = 1.03 - 0.03 * easedP;
+      } else if (p > STAGE_4 && p <= STAGE_5) {
+        let localP = (p - STAGE_4) / (STAGE_5 - STAGE_4);
+        let easedP = easeInOutCubic(localP);
+        imgOpacities[2] = 1.0 - easedP;
+        imgScales[2] = 1.0 - 0.03 * easedP;
+        imgOpacities[3] = easedP;
+        imgScales[3] = 1.03 - 0.03 * easedP;
+      } else if (p > STAGE_5 && p <= STAGE_6) {
+        let localP = (p - STAGE_5) / (STAGE_6 - STAGE_5);
+        let easedP = easeInOutCubic(localP);
+        imgOpacities[3] = 1.0 - easedP;
+        imgScales[3] = 1.0 - 0.03 * easedP;
+        imgOpacities[4] = easedP;
+        imgScales[4] = 1.03 - 0.03 * easedP;
+      } else {
+        imgOpacities[4] = 1;
+        imgScales[4] = 1;
+      }
+
+      gsap.set(img1, { opacity: imgOpacities[0], scale: imgScales[0] });
+      gsap.set(img2, { opacity: imgOpacities[1], scale: imgScales[1] });
+      gsap.set(img3, { opacity: imgOpacities[2], scale: imgScales[2] });
+      gsap.set(img4, { opacity: imgOpacities[3], scale: imgScales[3] });
+      gsap.set(img5, { opacity: imgOpacities[4], scale: imgScales[4] });
+
+      // 4. Scroll hint
+      let hintOpacity = p <= 0.02 ? 1.0 - (p / 0.02) : 0;
+      gsap.set(scrollHint, { opacity: hintOpacity });
+
+      // 5. Vignette intensity & About Me reveal (Stage 7)
+      let vignetteOpacity = 0;
+      let aboutOpacity = 0;
+      let aboutY = 50;
+      if (p > STAGE_6) {
+        let localP = (p - STAGE_6) / (STAGE_7 - STAGE_6);
+        let eased = easeInOutCubic(localP);
+        vignetteOpacity = eased * 0.9;
+        aboutOpacity = eased;
+        aboutY = 50 - 50 * eased;
+      }
+      gsap.set(overlay, { opacity: vignetteOpacity });
+      gsap.set(aboutMe, { opacity: aboutOpacity, y: aboutY });
+
+      // 6. Left sidebar progress text & vertical dots update
+      let stageIndex = 0;
+      let label = "INITIAL HERO";
+
+      if (p <= 0.02) {
+        stageIndex = 0;
+        label = "INITIAL HERO";
+      } else if (p > 0.02 && p <= STAGE_2) {
+        stageIndex = 1;
+        label = "LIGHT REVEALS";
+      } else if (p > STAGE_2 && p <= STAGE_3) {
+        stageIndex = 2;
+        label = "OPENS NOTEBOOK";
+      } else if (p > STAGE_3 && p <= STAGE_4) {
+        stageIndex = 3;
+        label = "WRITES MY NAME";
+      } else if (p > STAGE_4 && p <= STAGE_5) {
+        stageIndex = 4;
+        label = "WRITES MY NAME";
+      } else if (p > STAGE_5 && p <= STAGE_6) {
+        stageIndex = 5;
+        label = "NAME COMPLETE";
+      } else {
+        stageIndex = 6;
+        label = "NAME COMPLETE → TRANSITION";
+      }
+
+      document.getElementById('hero-progress-percent').textContent = Math.round(p * 100) + "%";
+      document.getElementById('hero-progress-label').textContent = label;
+
+      const dots = document.querySelectorAll('#hero-right-dots .dot');
+      dots.forEach((dot, idx) => {
+        if (idx === stageIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+
+      // 7. Debug console readout
+      if (debugDiv) {
+        debugDiv.innerHTML = `
+          <strong>HERO DIAGNOSTIC PANEL</strong><br>
+          Scroll Progress: ${(p * 100).toFixed(1)}%<br>
+          Target: ${targetProgress.toFixed(3)}<br>
+          Eased Progress: ${smoothedProgress.toFixed(3)}<br>
+          Stage Label: ${label}<br>
+          Preloaded: ${imagesPreloaded ? "YES" : "NO"}
+        `;
+      }
+    }
+
+    // Ticking loop using GSAP ticker
+    function smoothTick() {
+      const diff = targetProgress - smoothedProgress;
+      if (Math.abs(diff) > 0.0001) {
+        smoothedProgress += diff * lerpFactor;
+      } else {
+        smoothedProgress = targetProgress;
+      }
+      updateHeroVisuals(smoothedProgress);
+    }
+
+    gsap.ticker.remove(smoothTick);
+    gsap.ticker.add(smoothTick);
+
+    // Pinning via ScrollTrigger
+    st = ScrollTrigger.create({
+      trigger: wrap,
+      start: 'top top',
+      end: '+=400%',
+      pin: intro,
+      anticipatePin: 1,
+      scrub: true,
+      onUpdate: (self) => {
+        targetProgress = self.progress;
       }
     });
 
-    heroTl
-      // Hero subtitle slides up
-      .from('.hero-subtitle', { y: 24, opacity: 0, duration: 0.8, ease: 'power3.out' })
-      // Hero title: SplitType char masked reveal
-      .add(() => {
-        const titleEl = document.querySelector('.hero-title');
-        if (titleEl && typeof SplitType !== 'undefined') {
-          const split = new SplitType(titleEl, { types: 'chars' });
-          gsap.from(split.chars, {
-            yPercent: 120,
-            stagger: 0.04,
-            duration: 1.0,
-            ease: 'power4.out',
-          });
-        }
-      }, '-=0.4')
-      // Hero description
-      .from('.hero-desc', { y: 20, opacity: 0, duration: 0.9, ease: 'power3.out' }, '-=0.5')
-      // Profile photo slides in from right
-      .from('.profile-frame', { x: 60, opacity: 0, duration: 1.0, ease: 'power3.out' }, '-=0.7')
-      // Scroll indicator fades in last
-      .from('.scroll-indicator', { opacity: 0, duration: 0.8 }, '-=0.3');
   }
   // ──────────────────────────────────────────────────────────────────────────
 

@@ -71,29 +71,80 @@
   <main id="smooth-wrapper">
     <div id="smooth-content">
       
-      <!-- Hero Section -->
-      <section id="Intro" class="hero section hero-section">
-        <div class="container">
-          <div class="hero-layout">
-            <div class="hero-left">
-              <p class="hero-subtitle">COMPUTER SCIENCE ENGINEERING</p>
-              <div class="reveal-mask">
-                <h1 class="hero-title">PONRAM</h1>
-              </div>
-              <p class="hero-desc">Crafting logic. Solving problems. Pushing the boundaries of code and performance.</p>
+      <!-- Hero Cinematic Scroll & Shatter Sequence -->
+      <div id="hero-scroll-wrapper" class="hero-scroll-wrapper">
+        <section id="Intro" class="hero-pinned-section" aria-label="Hero">
+          
+          <!-- Persistent Left Sidebar -->
+          <div class="hero-left-sidebar">
+            <div class="hero-progress-group">
+              <span class="hero-progress-percent" id="hero-progress-percent">0%</span>
+              <span class="hero-progress-label" id="hero-progress-label">INITIAL HERO</span>
             </div>
-            <div class="hero-right">
-              <div class="profile-frame">
-                <img src="images/profile.jpeg" alt="Ponram P" onerror="this.src='https://via.placeholder.com/400x500/111111/e0ff00?text=Profile+Photo';">
-              </div>
+            <div class="hero-sidebar-static">
+              <p class="sidebar-eyebrow">COMPUTER SCIENCE ENGINEERING</p>
+              <p class="sidebar-tagline">Crafting logic. Solving problems. Pushing the boundaries of code and performance.</p>
+            </div>
+            <div class="hero-scroll-hint" id="hero-scroll-hint">
+              <span>SCROLL</span>
+              <div class="line"></div>
             </div>
           </div>
-        </div>
-        <div class="scroll-indicator">
-          <span>SCROLL</span>
-          <div class="line"></div>
-        </div>
-      </section>
+
+          <!-- Hero Centered Typography Box -->
+          <div class="hero-content-box" id="hero-content-box">
+            <div class="hero-title-group" id="hero-title-group">
+              <span class="hero-name-left" id="hero-name-left">PONR</span>
+              <span class="hero-name-right" id="hero-name-right">AM <span>P.</span></span>
+              <span class="hero-name-left" id="hero-name-left">PONRAM</span>
+              <span class="hero-name-right" id="hero-name-right"><span>P.</span></span>
+            </div>
+            
+            <div class="hero-meta-box" id="hero-meta-box">
+              <p class="hero-meta-subtitle">COMPUTER SCIENCE ENGINEERING</p>
+              <p class="hero-meta-desc">Crafting logic. Solving problems. Pushing the boundaries of code and performance.</p>
+            </div>
+          </div>
+
+          <!-- Centered Cinematic Video Container with Canvas -->
+          <div class="hero-video-container" id="hero-video-container">
+            <canvas id="hero-canvas"></canvas>
+            <video id="hero-video" src="Anime_character_writing_in_notebook_202608292252.mp4" muted playsinline preload="auto" style="display: none;"></video>
+          <!-- Centered Cinematic Images Container (5 Stage Images) -->
+          <div class="hero-images-container" id="hero-images-container">
+            <img src="images/1.png" id="hero-img-1" class="hero-stage-img" alt="Wide Desk Lamp">
+            <img src="images/2.png" id="hero-img-2" class="hero-stage-img" alt="Notebook Resting">
+            <img src="images/3.png" id="hero-img-3" class="hero-stage-img" alt="Poised Pen">
+            <img src="images/4.png" id="hero-img-4" class="hero-stage-img" alt="Mid-Writing">
+            <img src="images/5.png" id="hero-img-5" class="hero-stage-img" alt="Completed Writing">
+          </div>
+
+          <!-- Dark Overlay for transition into About -->
+          <!-- Persistent Right Dots -->
+          <div class="hero-right-dots" id="hero-right-dots">
+            <div class="dot active" data-stage="0"></div>
+            <div class="dot" data-stage="1"></div>
+            <div class="dot" data-stage="2"></div>
+            <div class="dot" data-stage="3"></div>
+            <div class="dot" data-stage="4"></div>
+            <div class="dot" data-stage="5"></div>
+            <div class="dot" data-stage="6"></div>
+          </div>
+
+          <!-- About Me Reveal (Stage 7) -->
+          <div class="about-me-reveal" id="about-me-reveal">ABOUT ME</div>
+
+          <!-- Dark Vignette Overlay for transition into About -->
+          <div class="hero-vignette-overlay" id="hero-vignette-overlay"></div>
+
+          <!-- Scroll Indicator Hint -->
+          <div class="hero-scroll-indicator" id="hero-scroll-indicator">
+            <span>SCROLL</span>
+            <div class="line"></div>
+          </div>
+
+        </section>
+      </div><!-- /hero-scroll-wrapper -->
 
       <!-- Stats Counter Section -->
       <section id="Stats" class="stats section compact-section">
@@ -231,37 +282,25 @@
       <section class="circle-gallery" id="Projects">
         <div class="circle-gallery-pin" id="circle-gallery-pin">
           
-          <!-- 6 Project Cover Images (Local path with Unsplash fallback) -->
+          <!-- 6 Project Cover Images -->
           <img class="cg-img"
-               src="images/project-pentest.jpeg"
-               data-fallback="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop"
-               alt="Smart Web Pentesting" width="1200" height="800"
-               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
+               src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1200&auto=format&fit=crop"
+               alt="Smart Web Pentesting" width="1200" height="800">
           <img class="cg-img"
-               src="images/project-skillbridge.jpeg"
-               data-fallback="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop"
-               alt="SkillBridge" width="1200" height="800"
-               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
+               src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1200&auto=format&fit=crop"
+               alt="SkillBridge" width="1200" height="800">
           <img class="cg-img"
-               src="images/project-navilens.jpeg"
-               data-fallback="https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?q=80&w=1200&auto=format&fit=crop"
-               alt="NaviLens AR" width="1200" height="800"
-               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
+               src="https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?q=80&w=1200&auto=format&fit=crop"
+               alt="NaviLens AR" width="1200" height="800">
           <img class="cg-img"
-               src="images/project-vaxitrack.jpeg"
-               data-fallback="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop"
-               alt="Vaxi-Track" width="1200" height="800"
-               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
+               src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop"
+               alt="Vaxi-Track" width="1200" height="800">
           <img class="cg-img"
-               src="images/project-cattle.jpeg"
-               data-fallback="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=1200&auto=format&fit=crop"
-               alt="AI Cattle Recognition" width="1200" height="800"
-               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
+               src="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=1200&auto=format&fit=crop"
+               alt="AI Cattle Recognition" width="1200" height="800">
           <img class="cg-img"
-               src="images/project-architectures.jpeg"
-               data-fallback="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
-               alt="Interactive Architectures" width="1200" height="800"
-               onerror="if(this.src!==this.dataset.fallback)this.src=this.dataset.fallback;">
+               src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
+               alt="Interactive Architectures" width="1200" height="800">
 
           <!-- Reference Introductory Statement -->
           <p class="cg-phrase" id="cg-phrase">
