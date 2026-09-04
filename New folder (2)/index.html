@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animation & Motion Testing Sandbox</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lenis CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.css" />
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Grain / Noise Film Overlay -->
+  <div class="grain-overlay" id="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Page Transition Curtain Overlay -->
+  <div class="page-transition" id="page-transition" aria-hidden="true">
+    <div class="transition-column"></div>
+    <div class="transition-column"></div>
+    <div class="transition-column"></div>
+    <div class="transition-column"></div>
+    <div class="transition-column"></div>
+  </div>
+
+  <!-- Custom Cursor Elements -->
+  <div class="custom-cursor" id="custom-cursor"></div>
+  <div class="custom-cursor-follower" id="cursor-follower">
+    <span class="cursor-text" id="cursor-text"></span>
+  </div>
+
+  <!-- Project Hover Preview Floating Image -->
+  <div class="project-hover-preview" id="project-hover-preview">
+    <img src="" alt="Project Preview" id="project-preview-img" />
+  </div>
+
+  <!-- Preloader / Intro Sequence Overlay -->
+  <div id="preloader" class="preloader">
+    <div class="preloader-name">
+      <span class="preloader-sans">Ponram</span>
+      <span class="preloader-serif">P.</span>
+    </div>
+  </div>
+
+  <!-- Header / Navigation Placeholder -->
+  <header class="navbar">
+    <div class="logo magnetic" data-magnetic>SANDBOX.LAB</div>
+    <nav class="nav-links">
+      <a href="#hero" class="nav-link magnetic" data-magnetic>Hero</a>
+      <a href="#projects" class="nav-link magnetic" data-magnetic>Projects</a>
+      <a href="#about" class="nav-link magnetic" data-magnetic>About</a>
+      <a href="#projects" class="nav-link nav-cta magnetic" data-magnetic data-page-transition>Transition Demo</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Section 1: Hero Section Placeholder -->
+    <section id="hero" class="hero-section">
+      <div class="container">
+        <p class="subtitle" data-reveal="chars">ANIMATION SYSTEM SANDBOX</p>
+        <h1 class="hero-title" data-reveal="lines">Crafting Motion & Interactive FX</h1>
+        <p class="hero-description" data-reveal="lines">
+          Testing Lenis smooth scroll, GSAP ScrollTrigger ticker integration, typography reveals, hover states, and smooth motion curves in isolation before production deployment.
+        </p>
+        <div class="hero-actions" data-scroll="fade-up" data-scroll-delay="0.3">
+          <a href="#projects" class="btn-magnetic magnetic" data-magnetic data-page-transition>
+            <span class="btn-text">EXPLORE WORK</span>
+            <span class="btn-icon">→</span>
+          </a>
+        </div>
+        <div class="scroll-indicator" data-scroll="fade-up" data-scroll-delay="0.4">
+          <span>SCROLL DOWN</span>
+          <div class="arrow-down">↓</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Projects List Placeholder (For testing scroll depth & hover interactions) -->
+    <section id="projects" class="projects-section">
+      <div class="container">
+        <h2 class="section-title" data-reveal="chars">Selected Projects</h2>
+        <div class="project-list" data-scroll-group="stagger">
+          
+          <div class="project-item" data-scroll="fade-up" data-cursor-text="VIEW" data-img="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop">
+            <div class="project-info">
+              <span class="project-num">01</span>
+              <h3 class="project-name">Project Alpha</h3>
+              <span class="project-category">Digital Experience / 2026</span>
+            </div>
+          </div>
+
+          <div class="project-item" data-scroll="fade-up" data-cursor-text="VIEW" data-img="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=600&auto=format&fit=crop">
+            <div class="project-info">
+              <span class="project-num">02</span>
+              <h3 class="project-name">Project Beta</h3>
+              <span class="project-category">Brand Identity & Visuals / 2026</span>
+            </div>
+          </div>
+
+          <div class="project-item" data-scroll="fade-up" data-cursor-text="VIEW" data-img="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?q=80&w=600&auto=format&fit=crop">
+            <div class="project-info">
+              <span class="project-num">03</span>
+              <h3 class="project-name">Project Gamma</h3>
+              <span class="project-category">Interactive Motion Concept / 2025</span>
+            </div>
+          </div>
+
+          <div class="project-item" data-scroll="fade-up" data-cursor-text="VIEW" data-img="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&auto=format&fit=crop">
+            <div class="project-info">
+              <span class="project-num">04</span>
+              <h3 class="project-name">Project Delta</h3>
+              <span class="project-category">Web Architecture & Design / 2025</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Extra Spacer & Feature Cards Section -->
+    <section id="about" class="about-section">
+      <div class="container">
+        <h2 class="section-title" data-reveal="chars">About the Motion Suite</h2>
+        <p class="about-text" data-reveal="lines">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+        <p class="about-text" data-reveal="lines">
+          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        </p>
+
+        <!-- Feature Cards for Fade & Scale-in Testing -->
+        <div class="card-grid" data-scroll-group="grid">
+          <div class="feature-card" data-scroll="scale-in">
+            <div class="card-badge">01 // FADE & SCALE</div>
+            <h4 class="card-title">Performance First</h4>
+            <p class="card-desc">Hardware-accelerated CSS transforms tied to GSAP requestAnimationFrame ticker.</p>
+          </div>
+          <div class="feature-card" data-scroll="scale-in" data-scroll-delay="0.15">
+            <div class="card-badge">02 // MODULAR</div>
+            <h4 class="card-title">Declarative Motion</h4>
+            <p class="card-desc">Attach data-scroll attributes directly to HTML nodes for instant scroll dynamics.</p>
+          </div>
+          <div class="feature-card" data-scroll="scale-in" data-scroll-delay="0.3">
+            <div class="card-badge">03 // SMOOTH</div>
+            <h4 class="card-title">Lenis Synergy</h4>
+            <p class="card-desc">Seamless scroll position synchronization preventing layout jank or frame drops.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-content">
+      <p>© 2026 Motion System Test Suite — Isolated Sandbox</p>
+      <a href="#hero" class="back-to-top magnetic" data-magnetic data-page-transition>
+        <span class="btn-text">BACK TO TOP ↑</span>
+      </a>
+    </div>
+  </footer>
+
+  <!-- CDN Libraries in exact required order -->
+  <!-- 1. Lenis Smooth Scroll -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+  
+  <!-- 2. GSAP Core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  
+  <!-- 3. GSAP ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  
+  <!-- 4. SplitType -->
+  <script src="https://unpkg.com/split-type"></script>
+
+  <!-- 5. Main Application Script -->
+  <script src="script.js"></script>
+</body>
+</html>

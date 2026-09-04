@@ -1,0 +1,843 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOTION LAYER
+   Loaded after css/style.css. Contains ONLY animation / interaction styling
+   plus the styles for hero sub-elements that shipped without any CSS.
+   Nothing here changes copy, layout intent, colours or typography choices.
+
+     M0  Motion tokens
+     M1  Hero sub-elements (previously unstyled)
+     M2  Reveal / mask primitives
+     M3  Navigation interaction
+     M4  Buttons, links & card micro-interactions
+     M5  Custom cursor states
+     M6  Projects: static fallback (mobile / reduced motion)
+     M7  Reduced motion & touch fallbacks
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── M0. Motion tokens ──────────────────────────────────────────────────── */
+:root {
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-expo-in-out: cubic-bezier(0.87, 0, 0.13, 1);
+  --ease-quart-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-fast: 0.35s;
+  --dur-mid: 0.6s;
+  --dur-slow: 0.9s;
+}
+
+/* ── M1. Hero sub-elements ─────────────────────────────────────────────────
+   These exist in the markup but had no styling at all, so they rendered as
+   unstyled flow text stacked on top of the hero. Styled here to the
+   portfolio's existing identity (Syncopate / #e0ff00 / #888).            */
+
+.hero-left-sidebar {
+  position: absolute;
+  top: 0;
+  left: 5%;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: min(260px, 24vw);
+  padding: 118px 0 34px;
+  pointer-events: none;
+}
+
+.hero-progress-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-progress-percent {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-progress-label {
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  letter-spacing: 2.5px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  min-height: 1.2em;
+}
+
+/* The gap between the two name halves is set in `em`, which resolved against
+   the group's inherited 16px rather than the display size — leaving
+   "PONRAM" and "P." touching. Match the group to the name's own scale. */
+.hero-title-group {
+  font-size: clamp(3.2rem, 9.5vw, 10rem);
+  gap: 0.24em;
+}
+
+/* ── Hero: text stripped back to the name ─────────────────────────────────
+   Requested: the opening screen shows the name and nothing else. Both copies
+   of the tagline are hidden (the sidebar block repeated the centred one word
+   for word). To bring them back, delete these two rules. */
+.hero-meta-box,
+.hero-sidebar-static { display: none; }
+
+/* With the static block gone, the scroll cue holds the bottom of the column */
+.hero-left-sidebar .hero-scroll-hint { margin-top: auto; }
+
+.hero-sidebar-static {
+  margin-top: auto;
+  margin-bottom: 30px;
+}
+
+.sidebar-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.sidebar-tagline {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+.hero-scroll-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 2.5px;
+  color: var(--text-secondary);
+  will-change: opacity;
+}
+
+.hero-scroll-hint .line {
+  width: 52px;
+  height: 1px;
+  background: var(--text-secondary);
+  transform-origin: left center;
+}
+
+/* Vertical stage dots */
+.hero-right-dots {
+  position: absolute;
+  top: 50%;
+  right: 5%;
+  transform: translateY(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.hero-right-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background var(--dur-fast) var(--ease-expo-out),
+              transform var(--dur-fast) var(--ease-expo-out);
+}
+
+.hero-right-dots .dot.active {
+  background: var(--accent);
+  transform: scale(1.9);
+}
+
+/* "ABOUT ME" hand-off — must sit above the vignette (z-index 5) */
+.about-me-reveal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 6;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 5vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* The legacy video/canvas box is unused (opacity:0) — keep it fully inert */
+.hero-video-container { pointer-events: none; }
+
+/* The wrapper's fixed 500vh had to be kept in sync by hand with the pin
+   length, and any mismatch became dead scroll after the sequence ended.
+   ScrollTrigger's pin-spacer already reserves exactly the right height, so
+   let the wrapper size to it. Without JS the hero is simply one screen. */
+.hero-scroll-wrapper { height: auto; }
+
+/* There are two identical SCROLL affordances in the hero: one inside the
+   sidebar, one standalone — both pinned to the bottom-left, so they printed
+   on top of each other. Show exactly one at every breakpoint: the sidebar's
+   above 768px, the standalone one below (where the sidebar is hidden). */
+.hero-scroll-indicator { display: none; }
+@media (max-width: 768px) {
+  .hero-scroll-indicator { display: flex; }
+}
+
+@media (max-width: 1024px) {
+  .hero-left-sidebar { width: min(210px, 30vw); padding-top: 104px; }
+  .sidebar-tagline { font-size: 0.75rem; }
+}
+
+@media (max-width: 768px) {
+  /* The sidebar text duplicates the centred hero meta verbatim, so hiding it
+     on small screens crowds nothing and loses no unique content. */
+  .hero-left-sidebar,
+  .hero-right-dots { display: none; }
+  /* NOTE: the frame stack is full-bleed on every breakpoint now. It must NOT
+     get a fixed width here — combined with `inset: 0` that over-constrains the
+     box and collapses the frame to a ~150px sliver. */
+
+}
+
+/* ── M2. Reveal / mask primitives ─────────────────────────────────────────
+   Mask wrappers are injected by js/motion.js. The padding/negative-margin
+   pair stops overflow:hidden from clipping descenders (g, y, p).        */
+
+.pm-line-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+.pm-line-mask > .line { display: block; will-change: transform; }
+
+.pm-mask-words .word {
+  overflow: hidden;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+.pm-mask-words .char { will-change: transform; }
+
+.pm-anim { will-change: transform, opacity; }
+
+/* Release the GPU hint once an element has finished revealing. These need to
+   out-specify the rules above, or every split line keeps a layer forever. */
+.pm-done,
+.pm-line-mask > .line.pm-done,
+.pm-mask-words .char.pm-done { will-change: auto; }
+
+/* ── M3. Navigation interaction ───────────────────────────────────────── */
+nav {
+  transform: translateY(0);
+  transition: transform var(--dur-mid) var(--ease-expo-out);
+  will-change: transform;
+}
+nav.nav-hidden { transform: translateY(-101%); }
+
+.nav-links a {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 4px;
+  transition: color var(--dur-fast) var(--ease-expo-out),
+              opacity var(--dur-fast) var(--ease-expo-out);
+}
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.55s var(--ease-expo-in-out);
+}
+.nav-links a:hover::after,
+.nav-links a:focus-visible::after,
+.nav-links a.is-active::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+.nav-links a.is-active { color: var(--accent); }
+
+/* Dim the siblings of the hovered link — reference-style focus pull */
+@media (hover: hover) and (min-width: 1025px) {
+  .nav-links:hover a:not(:hover) { opacity: 0.45; }
+}
+
+.logo { transition: opacity var(--dur-fast) var(--ease-expo-out); }
+
+/* ── M4. Buttons, links & card micro-interactions ─────────────────────── */
+
+/* Contact buttons: accent panel wipes up from the bottom edge */
+.magnetic-btn {
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+  background: transparent;
+  will-change: transform;
+  transition: color 0.5s var(--ease-expo-in-out),
+              border-color 0.5s var(--ease-expo-in-out);
+}
+.magnetic-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  transform: translateY(101%);
+  transition: transform 0.6s var(--ease-expo-in-out);
+}
+.magnetic-btn:hover,
+.magnetic-btn:focus-visible {
+  background: transparent;
+  color: var(--bg-color);
+  border-color: var(--accent);
+}
+.magnetic-btn:hover::before,
+.magnetic-btn:focus-visible::before { transform: translateY(0); }
+
+/* Back-to-top */
+#back-to-top {
+  transition: opacity var(--dur-fast) var(--ease-expo-out),
+              transform var(--dur-fast) var(--ease-expo-out),
+              visibility var(--dur-fast);
+}
+#back-to-top:hover { transform: translateY(-5px) scale(1.06); }
+#back-to-top i { transition: transform var(--dur-fast) var(--ease-expo-out); }
+#back-to-top:hover i { transform: translateY(-2px); }
+
+/* Bento boxes & info blocks */
+.bento-box {
+  transition: border-color var(--dur-mid) var(--ease-expo-out),
+              transform var(--dur-mid) var(--ease-expo-out),
+              background var(--dur-mid) var(--ease-expo-out);
+}
+.info-block {
+  transition: border-color var(--dur-mid) var(--ease-expo-out),
+              padding-left var(--dur-mid) var(--ease-expo-out);
+}
+@media (hover: hover) and (min-width: 1025px) {
+  .info-block.standout:hover { padding-left: 32px; }
+}
+
+/* Hobby rows */
+.hobby-list li { transition: transform var(--dur-mid) var(--ease-expo-out); }
+.hobby-icon {
+  transition: transform var(--dur-mid) var(--ease-expo-out),
+              background var(--dur-mid) var(--ease-expo-out),
+              border-color var(--dur-mid) var(--ease-expo-out);
+}
+@media (hover: hover) and (min-width: 1025px) {
+  .hobby-list li:hover { transform: translateX(10px); }
+  .hobby-list li:hover .hobby-icon {
+    transform: scale(1.08) rotate(-4deg);
+    background: rgba(224, 255, 0, 0.12);
+    border-color: var(--accent);
+  }
+}
+
+.stat-item { transition: transform var(--dur-mid) var(--ease-expo-out); }
+.cg-btn { will-change: transform; }
+
+/* The marquee row is full-width and drifts horizontally with scroll, so its
+   section has to clip it. `clip` (not `hidden`) keeps vertical overflow
+   visible and creates no scroll container, so ScrollTrigger pinning elsewhere
+   on the page is unaffected. */
+.expertise { overflow-x: clip; }
+
+/* Scroll progress: transform instead of width — no layout on every frame */
+#scroll-progress {
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: none;
+  will-change: transform;
+}
+
+/* ── M5. Custom cursor states ─────────────────────────────────────────── */
+.cursor,
+.cursor-follower { will-change: transform; }
+
+.cursor { transition: opacity var(--dur-fast) var(--ease-expo-out); }
+.cursor.is-hidden { opacity: 0; }
+
+.cursor-follower {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width var(--dur-fast) var(--ease-expo-out),
+              height var(--dur-fast) var(--ease-expo-out),
+              background var(--dur-fast) var(--ease-expo-out),
+              border-color var(--dur-fast) var(--ease-expo-out);
+}
+
+.cursor-label {
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--bg-color);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity var(--dur-fast) var(--ease-expo-out),
+              transform var(--dur-fast) var(--ease-expo-out);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.cursor-follower.is-link { border-color: var(--accent); }
+.cursor-follower.is-label {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.cursor-follower.is-label .cursor-label { opacity: 1; transform: scale(1); }
+
+/* ── M6. Projects: static fallback (mobile / reduced motion) ───────────
+   The scroll-driven 3D orbit is desktop-only. Without this the Projects
+   section rendered as 600vh of empty space on phones. Same six projects,
+   same images, same links — just presented as a list.                  */
+
+html.pm-cg-static .circle-gallery {
+  height: auto;
+  overflow: visible;
+}
+html.pm-cg-static .circle-gallery-pin {
+  height: auto;
+  display: block;
+  perspective: none;
+  padding: 70px 5% 80px;
+}
+html.pm-cg-static .cg-img,
+html.pm-cg-static .cg-center-ui { display: none !important; }
+
+html.pm-cg-static .cg-phrase {
+  position: static;
+  opacity: 1 !important;
+  transform: none !important;
+  max-width: 720px;
+  margin: 0 auto 50px;
+}
+html.pm-cg-static .cg-phrase .word {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.cg-static-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 26px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.cg-static-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color var(--dur-mid) var(--ease-expo-out),
+              transform var(--dur-mid) var(--ease-expo-out);
+}
+.cg-static-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+.cg-static-media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+}
+.cg-static-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.7s var(--ease-expo-out);
+}
+.cg-static-card:hover .cg-static-media img { transform: scale(1.05); }
+.cg-static-body { padding: 20px 22px 24px; }
+.cg-static-num {
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  letter-spacing: 2px;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 8px;
+}
+.cg-static-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.cg-static-cta {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color var(--dur-fast) var(--ease-expo-out);
+}
+.cg-static-card:hover .cg-static-cta { color: var(--accent); }
+.cg-static-cta span { transition: transform var(--dur-fast) var(--ease-expo-out); }
+.cg-static-card:hover .cg-static-cta span { transform: translateX(5px); }
+
+/* ── M7. Reduced motion & touch fallbacks ─────────────────────────────── */
+
+/* Touch / no-hover devices: never hide the system cursor, never run the
+   custom one, and drop the always-on particle canvas + grain. */
+@media (hover: none), (pointer: coarse) {
+  body, a, button, .magnetic-btn { cursor: auto !important; }
+  .cursor, .cursor-follower { display: none !important; }
+  #bg-canvas { display: none !important; }
+  .grain-overlay { display: none !important; }
+}
+
+/* Reduced motion turns the pinned cinematic sequence into one static screen.
+   The frame can no longer sit *behind* the name (nothing moves it out of the
+   way), so the hero stacks: title, supporting copy, then the final frame. */
+html.pm-reduced .hero-scroll-wrapper { height: auto !important; }
+html.pm-reduced #Intro.hero-pinned-section {
+  height: auto;
+  min-height: 100vh;
+  gap: 44px;
+  padding: 130px 5% 70px !important;
+}
+html.pm-reduced .hero-content-box {
+  position: static;
+  height: auto;
+  width: auto;
+}
+/* The sidebar's progress readout is meaningless without a scroll sequence and
+   its tagline repeats the centred copy verbatim. */
+html.pm-reduced .hero-left-sidebar { display: none; }
+html.pm-reduced .hero-scroll-hint,
+html.pm-reduced .hero-scroll-indicator,
+html.pm-reduced .hero-right-dots,
+html.pm-reduced .about-me-reveal,
+html.pm-reduced .hero-vignette-overlay { display: none !important; }
+html.pm-reduced .grain-overlay,
+html.pm-reduced #bg-canvas,
+html.pm-reduced .cursor,
+html.pm-reduced .cursor-follower { display: none !important; }
+html.pm-reduced body,
+html.pm-reduced a,
+html.pm-reduced button { cursor: auto !important; }
+html.pm-reduced .scene-3d-overlay { opacity: 1 !important; transform: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee { animation: none !important; transform: none !important; }
+  .glitch::before,
+  .glitch::after { animation: none !important; display: none !important; }
+  .cursor, .cursor-follower, .grain-overlay, #bg-canvas { display: none !important; }
+  body, a, button, .magnetic-btn { cursor: auto !important; }
+  nav.nav-hidden { transform: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   M8  CINEMATIC INTRO  (dark screen → opening line → Death Note video → Hero)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* The preloader spelled out "PONRAM P." before the video writes it, which gave
+   away the whole reveal. The intro sequence is the loading screen now. */
+#loader { display: none !important; }
+
+.intro-seq {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.intro-seq.is-done { display: none; }
+
+/* Page is locked while the sequence runs */
+html.intro-active,
+html.intro-active body { overflow: hidden !important; }
+
+.intro-line {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  max-width: min(920px, 86vw);
+  text-align: center;
+  font-family: var(--font-main);
+  font-weight: 300;
+  font-size: clamp(1.45rem, 4.1vw, 3.3rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+.intro-line .line { display: block; }
+.intro-line .word {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+/* Final darkness that carries the hook into the Kira sequence */
+.intro-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #050505;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.intro-skip {
+  position: absolute;
+  z-index: 4;
+  bottom: clamp(22px, 4vh, 44px);
+  right: clamp(18px, 4vw, 48px);
+  padding: 11px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 40px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 2.5px;
+  cursor: pointer;
+  opacity: 0;
+  transition: color var(--dur-fast) var(--ease-expo-out),
+              background var(--dur-fast) var(--ease-expo-out),
+              border-color var(--dur-fast) var(--ease-expo-out),
+              opacity 0.5s var(--ease-expo-out);
+}
+.intro-skip:hover,
+.intro-skip:focus-visible {
+  color: var(--bg-color);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .intro-line { font-size: clamp(1.3rem, 6.4vw, 2.1rem); }
+}
+
+/* The stage read-out and dots narrated the old 5-frame Hero sequence —
+   Hero is just the name now, nothing left for them to report. */
+.hero-progress-group,
+.hero-right-dots { display: none; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   M10  KIRA / DEATH NOTE SEQUENCE — scroll-driven, full black at rest
+   ═══════════════════════════════════════════════════════════════════════════
+   Pinned like the Hero (same proven pattern: `wrapper { height:auto }`, JS
+   reserves scroll distance via ScrollTrigger's pin-spacer). At rest — before
+   the visitor scrolls a pixel — every frame is at opacity 0, so the section
+   is pure black. Nothing else is drawn over it: no name, no chrome. Nav and
+   the Hero name stay hidden (`html.pre-kira`, toggled in script.js) for the
+   same reason, until this section's scroll range is behind the visitor. */
+
+.kira-scroll-wrapper { position: relative; width: 100%; height: auto; overflow-x: clip; }
+
+.kira-pinned-section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+.kira-frames { position: absolute; inset: 0; z-index: 1; }
+.kira-frames picture { display: contents; }
+
+.kira-frame-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  opacity: 0;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
+}
+
+.kira-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #050505;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.kira-scroll-hint {
+  position: absolute;
+  bottom: clamp(28px, 6vh, 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  color: var(--text-secondary);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+.kira-scroll-hint .line {
+  width: 1px;
+  height: 36px;
+  background: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  /* Portrait viewports crop a 16:9 frame hard. The writing sits centre-left
+     through the close-ups, so bias the crop that way rather than centring. */
+  #kira-img-1 { object-position: 56% center; }
+  #kira-img-2 { object-position: 48% center; }
+  #kira-img-3 { object-position: 44% center; }
+  #kira-img-4 { object-position: 36% center; }
+  #kira-img-5 { object-position: 40% center; }
+}
+
+/* Persistent chrome stays hidden until the visitor has scrolled the Kira
+   sequence to (or past) its end. `html.pre-kira` is the default state, set
+   before the sequence's own JS runs, so nav can never flash in early. */
+html.pre-kira nav,
+html.pre-kira #back-to-top,
+html.pre-kira #scroll-progress {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* Adds an opacity fade to each element's own transition list rather than a
+   blanket rule — a shared shorthand would silently drop `nav`'s transform
+   transition and `#scroll-progress`'s deliberate `transition:none` (that one
+   updates every scroll frame 1:1; animating it would make it visibly lag). */
+nav { transition: transform var(--dur-mid) var(--ease-expo-out), opacity 0.5s var(--ease-expo-out); }
+/* #back-to-top already transitions opacity via its M4 rule — nothing to add. */
+#scroll-progress { transition: opacity 0.4s var(--ease-expo-out); }
+
+/* Reduced motion: no pinned reveal — skip straight to the Hero, same as the
+   opening line already does. */
+html.pm-reduced .kira-scroll-wrapper { display: none; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   M9  ABOUT — editorial composition (copy left, portrait right)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.about.section {
+  padding-left: 0;
+  padding-right: 0;
+  overflow-x: clip; /* the portrait bleeds to the right edge */
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: clamp(34px, 5vw, 92px);
+  width: 100%;
+  /* Aligns the copy with the 1400px container used by every other section,
+     while the portrait column runs on to the viewport edge. */
+  padding-left: calc(max(0px, (100vw - 1400px) / 2) + 70px);
+}
+
+.about-copy { max-width: 640px; }
+
+.about-eyebrow {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 22px;
+}
+
+.about-title { margin-bottom: 26px; }
+.about-lead { margin-bottom: 36px; }
+.about-info .info-block:last-child { margin-bottom: 0; }
+
+.about-portrait {
+  position: relative;
+  will-change: transform;
+}
+
+.about-portrait-mask {
+  position: relative;
+  width: 100%;
+  height: clamp(460px, 80vh, 860px);
+  overflow: hidden;
+  background: #0b0b0b;
+  /* The curved left edge from the reference composition — an arch, not a
+     semicircle, so it reads as a shaped column rather than a pill. */
+  border-radius: clamp(130px, 17vw, 250px) 0 0 clamp(130px, 17vw, 250px);
+  will-change: clip-path;
+}
+
+.about-portrait-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  /* Portrait source (1029x1280); the face sits upper-centre. */
+  object-position: 55% 22%;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+@media (hover: hover) and (min-width: 1025px) {
+  .about-portrait-mask { cursor: none; }
+}
+
+@media (max-width: 900px) {
+  .about-grid {
+    grid-template-columns: 1fr;
+    gap: 44px;
+    padding-left: 0;
+  }
+  .about-copy {
+    max-width: none;
+    padding: 0 5%;
+  }
+  .about-portrait-mask {
+    height: clamp(340px, 56vh, 520px);
+    border-radius: clamp(90px, 22vw, 170px) 0 0 clamp(90px, 22vw, 170px);
+  }
+}
+
+/* Reduced motion: the composition stays, the choreography does not. */
+html.pm-reduced .about-portrait-mask { clip-path: none !important; }
+html.pm-reduced .about-portrait-img { transform: none !important; }
+html.pm-reduced .about-portrait { transform: none !important; }
+html.pm-reduced .intro-seq { display: none !important; }

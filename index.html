@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="pre-kira">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,6 +12,11 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/motion.css" />
+  <!-- `html.pre-kira` (set on the root tag) hides nav until the Kira sequence
+       completes. With JS disabled that class never gets removed, so force
+       nav visible for that case specifically. -->
+  <noscript><style>html.pre-kira nav, html.pre-kira #back-to-top { opacity: 1 !important; pointer-events: auto !important; }</style></noscript>
 </head>
 <body>
 
@@ -24,6 +29,14 @@
       <span class="preloader-sans">PONRAM</span>
       <span class="preloader-serif">P.</span>
     </div>
+  </div>
+
+  <!-- Cinematic hook: dark screen -> "Every story begins with a name." -> fades to
+       full black and hands off to the scroll-driven Kira sequence below. -->
+  <div class="intro-seq" id="intro-seq" role="region" aria-label="Opening sequence">
+    <p class="intro-line" id="intro-line">Every story begins with a name.</p>
+    <div class="intro-veil" id="intro-veil" aria-hidden="true"></div>
+    <button class="intro-skip" id="intro-skip" type="button">SKIP</button>
   </div>
 
   <!-- Grain Noise SVG Filter -->
@@ -71,7 +84,25 @@
   <main id="smooth-wrapper">
     <div id="smooth-content">
       
-      <!-- Hero Cinematic Scroll & Shatter Sequence -->
+      <!-- Kira / Death Note cinematic reveal — scroll-driven, full black at rest.
+           Nav and the Hero name stay hidden (html.pre-kira) until this completes. -->
+      <div id="kira-scroll-wrapper" class="kira-scroll-wrapper">
+        <section id="KiraIntro" class="kira-pinned-section" aria-label="Opening cinematic">
+          <div class="kira-frames" id="kira-frames">
+            <picture><source srcset="images/1.webp" type="image/webp"><img src="images/1.jpg" id="kira-img-1" class="kira-frame-img" alt="" fetchpriority="high"></picture>
+            <picture><source srcset="images/2.webp" type="image/webp"><img src="images/2.jpg" id="kira-img-2" class="kira-frame-img" alt=""></picture>
+            <picture><source srcset="images/3.webp" type="image/webp"><img src="images/3.jpg" id="kira-img-3" class="kira-frame-img" alt=""></picture>
+            <picture><source srcset="images/4.webp" type="image/webp"><img src="images/4.jpg" id="kira-img-4" class="kira-frame-img" alt=""></picture>
+            <picture><source srcset="images/5.webp" type="image/webp"><img src="images/5.jpg" id="kira-img-5" class="kira-frame-img" alt="A name being written in a notebook by lamplight"></picture>
+          </div>
+          <div class="kira-vignette" id="kira-vignette" aria-hidden="true"></div>
+          <div class="kira-scroll-hint" id="kira-scroll-hint">
+            <span>SCROLL</span>
+            <div class="line"></div>
+          </div>
+        </section>
+      </div><!-- /kira-scroll-wrapper -->
+
       <div id="hero-scroll-wrapper" class="hero-scroll-wrapper">
         <section id="Intro" class="hero-pinned-section" aria-label="Hero">
           
@@ -94,8 +125,6 @@
           <!-- Hero Centered Typography Box -->
           <div class="hero-content-box" id="hero-content-box">
             <div class="hero-title-group" id="hero-title-group">
-              <span class="hero-name-left" id="hero-name-left">PONR</span>
-              <span class="hero-name-right" id="hero-name-right">AM <span>P.</span></span>
               <span class="hero-name-left" id="hero-name-left">PONRAM</span>
               <span class="hero-name-right" id="hero-name-right"><span>P.</span></span>
             </div>
@@ -106,20 +135,6 @@
             </div>
           </div>
 
-          <!-- Centered Cinematic Video Container with Canvas -->
-          <div class="hero-video-container" id="hero-video-container">
-            <canvas id="hero-canvas"></canvas>
-            <video id="hero-video" src="Anime_character_writing_in_notebook_202608292252.mp4" muted playsinline preload="auto" style="display: none;"></video>
-          <!-- Centered Cinematic Images Container (5 Stage Images) -->
-          <div class="hero-images-container" id="hero-images-container">
-            <img src="images/1.png" id="hero-img-1" class="hero-stage-img" alt="Wide Desk Lamp">
-            <img src="images/2.png" id="hero-img-2" class="hero-stage-img" alt="Notebook Resting">
-            <img src="images/3.png" id="hero-img-3" class="hero-stage-img" alt="Poised Pen">
-            <img src="images/4.png" id="hero-img-4" class="hero-stage-img" alt="Mid-Writing">
-            <img src="images/5.png" id="hero-img-5" class="hero-stage-img" alt="Completed Writing">
-          </div>
-
-          <!-- Dark Overlay for transition into About -->
           <!-- Persistent Right Dots -->
           <div class="hero-right-dots" id="hero-right-dots">
             <div class="dot active" data-stage="0"></div>
@@ -130,9 +145,6 @@
             <div class="dot" data-stage="5"></div>
             <div class="dot" data-stage="6"></div>
           </div>
-
-          <!-- About Me Reveal (Stage 7) -->
-          <div class="about-me-reveal" id="about-me-reveal">ABOUT ME</div>
 
           <!-- Dark Vignette Overlay for transition into About -->
           <div class="hero-vignette-overlay" id="hero-vignette-overlay"></div>
@@ -172,25 +184,35 @@
 
       <!-- About Section -->
       <section id="About" class="about section compact-section">
-        <div class="container split-grid">
-          <div class="left-col gs-reveal">
-            <h2 class="massive-title">THE<br>ARCHITECT</h2>
-          </div>
-          <div class="right-col gs-reveal">
-            <p class="lead-text reveal-text">Engineering solutions through precise logic and creativity.</p>
-            
-            <div class="info-block">
-              <span class="meta">ENROLLED: 2024</span>
-              <h3>Loyola ICAM College of Engineering & Technology</h3>
-              <p>Bachelor's in Computer Science & Engineering. Building a rigorous foundation in algorithms and systems architecture.</p>
+        <div class="about-grid">
+
+          <div class="about-copy">
+            <span class="about-eyebrow">ABOUT</span>
+            <h2 class="massive-title about-title">THE<br>ARCHITECT</h2>
+            <p class="lead-text about-lead">Engineering solutions through precise logic and creativity.</p>
+
+            <div class="about-info">
+              <div class="info-block">
+                <span class="meta">ENROLLED: 2024</span>
+                <h3>Loyola ICAM College of Engineering &amp; Technology</h3>
+                <p>Bachelor's in Computer Science &amp; Engineering. Building a rigorous foundation in algorithms and systems architecture.</p>
+              </div>
+
+              <div class="info-block">
+                <span class="meta">TUTICORIN</span>
+                <h3>The Vikasa School</h3>
+                <p>Completed higher secondary education with a strong academic foundation.</p>
+              </div>
             </div>
-            
-            <div class="info-block">
-              <span class="meta">TUTICORIN</span>
-              <h3>The Vikasa School</h3>
-              <p>Completed higher secondary education with a strong academic foundation.</p>
+          </div>
+
+          <div class="about-portrait" id="about-portrait">
+            <div class="about-portrait-mask" id="about-portrait-mask">
+              <img src="images/profile.jpeg" alt="Ponram P" class="about-portrait-img"
+                   id="about-portrait-img" width="1029" height="1280" loading="lazy" decoding="async">
             </div>
           </div>
+
         </div>
       </section>
 
@@ -434,9 +456,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
-  <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
   <script src="https://unpkg.com/split-type@0.3.4/umd/index.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/motion.js"></script>
   <script src="js/script.js"></script>
 
 </body>

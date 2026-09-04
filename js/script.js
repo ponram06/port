@@ -1,1104 +1,1048 @@
-// ─── Smooth Scroll: Lenis + GSAP Ticker Sync ───────────────────────────────
-// Lenis drives all scroll momentum; GSAP's ticker calls lenis.raf() each frame
-// so ScrollTrigger reads Lenis positions, not native scroll positions.
-gsap.registerPlugin(ScrollTrigger);
+/* ═══════════════════════════════════════════════════════════════════════════
+   Page behaviour.
 
-const lenis = new Lenis({
-  duration: 1.2,
-  easing: (t) => 1 - Math.pow(1 - t, 3), // cubic ease-out — matches reference feel
-});
+   Shared motion utilities (smooth scroll, reveals, parallax, magnetic
+   elements, custom cursor, nav behaviour, scroll progress) live in
+   js/motion.js and are reached through `window.PM`. This file owns only the
+   page-specific pieces:
 
-// Wrap update in arrow fn so `this` context is preserved inside GSAP
-lenis.on('scroll', () => ScrollTrigger.update());
+     1. Particle background
+     2. Preloader + load choreography hand-off
+     3. Hero cinematic scroll sequence
+     4. Stat counters
+     5. Mobile menu
+     6. Tilt + spotlight + click ripple
+     7. Three.js scene
+     8. Projects: 3D circular gallery (+ static fallback)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-gsap.ticker.add((time) => {
-  lenis.raf(time * 1000);
-});
+(function () {
+  'use strict';
 
-gsap.ticker.lagSmoothing(0); // prevent GSAP from throttling RAF on slow frames
-// ────────────────────────────────────────────────────────────────────────────
+  var PM = window.PM;
+  var env = PM ? PM.env : { reduced: false, touch: false, mobile: false, heavy: true, pointerFX: true };
 
-
-
-
-// Canvas Particle Network Background
-const canvas = document.getElementById('bg-canvas');
-const ctx = canvas.getContext('2d');
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let particlesArray;
-let mouseX = -9999;
-let mouseY = -9999;
-
-window.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-});
-
-class Particle {
-  constructor(x, y, directionX, directionY, size, color) {
-    this.x = x; this.y = y;
-    this.directionX = directionX; this.directionY = directionY;
-    this.size = size; this.color = color;
+  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger);
   }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-  }
-  update() {
-    if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
-    if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
-    let dx = mouseX - this.x;
-    let dy = mouseY - this.y;
-    let distance = Math.sqrt(dx*dx + dy*dy);
-    if (distance < 150) {
-      this.x -= dx/10;
-      this.y -= dy/10;
-    }
-    this.x += this.directionX;
-    this.y += this.directionY;
-    this.draw();
-  }
-}
 
-function initCanvas() {
-  particlesArray = [];
-  let numberOfParticles = (canvas.height * canvas.width) / 15000;
-  if (numberOfParticles > 100) numberOfParticles = 100;
-  for (let i = 0; i < numberOfParticles; i++) {
-    let size = (Math.random() * 2) + 1;
-    let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
-    let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
-    let directionX = (Math.random() * 2) - 1;
-    let directionY = (Math.random() * 2) - 1;
-    let color = 'rgba(224, 255, 0, 0.5)';
-    particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
-  }
-}
+  /* ─── 1. PARTICLE BACKGROUND ──────────────────────────────────────────────
+     Skipped entirely on touch devices and under reduced motion — it is pure
+     decoration and the per-frame O(n²) link pass is the most expensive thing
+     on the page. */
 
-function animateCanvas() {
-  requestAnimationFrame(animateCanvas);
-  ctx.clearRect(0, 0, innerWidth, innerHeight);
-  for (let i = 0; i < particlesArray.length; i++) {
-    particlesArray[i].update();
-  }
-  connectParticles();
-}
+  function initParticles() {
+    var canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
 
-function connectParticles() {
-  for (let a = 0; a < particlesArray.length; a++) {
-    for (let b = a; b < particlesArray.length; b++) {
-      let distance = ((particlesArray[a].x - particlesArray[b].x) ** 2) +
-                     ((particlesArray[a].y - particlesArray[b].y) ** 2);
-      if (distance < (canvas.width / 7) * (canvas.height / 7)) {
-        let opacityValue = 1 - (distance / 20000);
-        ctx.strokeStyle = `rgba(255, 255, 255, ${opacityValue * 0.2})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
-        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
-        ctx.stroke();
-      }
-    }
-  }
-}
-
-window.addEventListener('resize', () => {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
-  initCanvas();
-});
-
-initCanvas();
-animateCanvas();
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  // ─── 1. PRELOADER (unchanged logic) ─────────────────────────────────────
-  const loader         = document.getElementById('loader');
-  const preloaderSans  = document.querySelector('.preloader-sans');
-  const preloaderSerif = document.querySelector('.preloader-serif');
-
-  const loaderSafetyTimer = setTimeout(() => {
-    if (loader) loader.style.display = 'none';
-    initHeroCinematicScroll();
-  }, 10000);
-
-  gsap.timeline({
-    onComplete: () => {
-      clearTimeout(loaderSafetyTimer);
-      // Small delay so ScrollTrigger can measure DOM before building timeline
-      requestAnimationFrame(() => {
-        ScrollTrigger.refresh();
-        initHeroCinematicScroll();
-      });
-    }
-  })
-  .fromTo(preloaderSans,  { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' })
-  .fromTo(preloaderSerif, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' }, '-=0.85')
-  .to({}, { duration: 0.6 })
-  .to(loader, { yPercent: -100, duration: 0.9, ease: 'power4.inOut', onComplete: () => { loader.style.display = 'none'; } });
-
-  // ─── 2. HERO CINEMATIC SCROLL SEQUENCE (5-IMAGE SEQUENCE) ──────────────────
-  const STAGE_1 = 0.0;
-  const STAGE_2 = 0.25;
-  const STAGE_3 = 0.40;
-  const STAGE_4 = 0.55;
-  const STAGE_5 = 0.75;
-  const STAGE_6 = 0.95;
-  const STAGE_7 = 1.0;
-
-  function initHeroCinematicScroll() {
-    const wrap       = document.getElementById('hero-scroll-wrapper');
-    const intro      = document.getElementById('Intro');
-    const nameLeft   = document.getElementById('hero-name-left');
-    const nameRight  = document.getElementById('hero-name-right');
-    const contentBox = document.getElementById('hero-content-box');
-    const imagesBox  = document.getElementById('hero-images-container');
-    const overlay    = document.getElementById('hero-vignette-overlay');
-    const scrollHint = document.getElementById('hero-scroll-hint');
-    const aboutMe    = document.getElementById('about-me-reveal');
-
-    // Select stage images
-    const img1 = document.getElementById('hero-img-1');
-    const img2 = document.getElementById('hero-img-2');
-    const img3 = document.getElementById('hero-img-3');
-    const img4 = document.getElementById('hero-img-4');
-    const img5 = document.getElementById('hero-img-5');
-
-    if (!wrap || !intro || !nameLeft || !nameRight || !contentBox || !imagesBox || !overlay || !scrollHint || !aboutMe || !img1 || !img2 || !img3 || !img4 || !img5) {
-      console.warn('[Hero] Required elements missing for 5-image cinematic scroll.');
+    if (env.reduced || env.touch || env.mobile) {
+      canvas.style.display = 'none';
       return;
     }
 
-    const SHOW_DEBUG_READOUT = false; // Toggle to true during build debugging
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var mouseX = -9999;
+    var mouseY = -9999;
+    var rafId = null;
 
-    // Create debug readout if enabled
-    let debugDiv = null;
-    if (SHOW_DEBUG_READOUT) {
-      debugDiv = document.createElement('div');
-      debugDiv.style.cssText = 'position:fixed; bottom:20px; right:20px; background:rgba(0,0,0,0.85); color:#e0ff00; padding:12px; font-family:monospace; font-size:11px; border:1px solid #e0ff00; border-radius:4px; z-index:99999; pointer-events:none; line-height:1.4;';
-      document.body.appendChild(debugDiv);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('mousemove', function (e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }, { passive: true });
+
+    function Particle(x, y, dx, dy, size, color) {
+      this.x = x; this.y = y;
+      this.directionX = dx; this.directionY = dy;
+      this.size = size; this.color = color;
     }
-
-    // Image preloading using image.decode() to avoid flash/pop-in
-    const imagesToPreload = [
-      'images/1.png',
-      'images/2.png',
-      'images/3.png',
-      'images/4.png',
-      'images/5.png'
-    ];
-    let imagesPreloaded = false;
-    let preloadedCount = 0;
-
-    imagesToPreload.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-      img.decode().then(() => {
-        preloadedCount++;
-        if (preloadedCount === imagesToPreload.length) {
-          imagesPreloaded = true;
-          console.log('[Hero] All 5 keyframe images preloaded successfully.');
-        }
-      }).catch((err) => {
-        console.warn('[Hero] Failed to preload:', src, err);
-      });
-    });
-
-    // Easing utility
-    function easeInOutCubic(t) {
-      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    // Dynamic split distances
-    const vw = window.innerWidth;
-    const isMobile = vw <= 768;
-    const splitXDistance = isMobile ? vw * 0.22 : vw * 0.28;
-    const splitXDistanceMax = isMobile ? vw * 0.38 : vw * 0.48;
-    const cinematicScaleMax = isMobile ? 2.5 : 2.0;
-
-    // Initial state setup
-    gsap.set(nameLeft,   { x: 0, opacity: 1 });
-    gsap.set(nameRight,  { x: 0, opacity: 1 });
-    gsap.set(contentBox, { y: '22vh' });
-    gsap.set(imagesBox,  { scale: 0.08, opacity: 0, borderRadius: '12px' });
-    gsap.set(overlay,    { opacity: 0 });
-    gsap.set(scrollHint, { opacity: 1 });
-    gsap.set(aboutMe,    { opacity: 0, y: 50 });
-
-    let targetProgress = 0;
-    let smoothedProgress = 0;
-    const lerpFactor = 0.08;
-
-    // Central frame renderer mapping smoothedProgress (p) directly
-    function updateHeroVisuals(p) {
-      // 1. Text split & opacity fade
-      let nameX = 0;
-      let nameOpacity = 1;
-      if (p <= STAGE_2) {
-        let localP = p / STAGE_2;
-        let eased = easeInOutCubic(localP);
-        nameX = splitXDistance * eased;
-        nameOpacity = 1.0 - 0.6 * eased; // 1.0 -> 0.4
-      } else if (p > STAGE_2 && p <= STAGE_4) {
-        let localP = (p - STAGE_2) / (STAGE_4 - STAGE_2);
-        let eased = easeInOutCubic(localP);
-        nameX = splitXDistance + (splitXDistanceMax - splitXDistance) * eased;
-        nameOpacity = 0.4 - 0.35 * eased; // 0.4 -> 0.05
-      } else {
-        let localP = Math.min(1.0, (p - STAGE_4) / (STAGE_5 - STAGE_4));
-        let eased = easeInOutCubic(localP);
-        nameX = splitXDistanceMax + (splitXDistanceMax * 0.2) * eased;
-        nameOpacity = Math.max(0, 0.05 - 0.05 * eased); // 0.05 -> 0.00
+    Particle.prototype.draw = function () {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    };
+    Particle.prototype.update = function () {
+      if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+      if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+      var dx = mouseX - this.x;
+      var dy = mouseY - this.y;
+      if (dx * dx + dy * dy < 22500) { // 150px, no sqrt
+        this.x -= dx / 10;
+        this.y -= dy / 10;
       }
-      gsap.set(nameLeft,  { x: -nameX, opacity: nameOpacity });
-      gsap.set(nameRight, { x: nameX, opacity: nameOpacity });
-
-      // 2. Image container scale & border-radius
-      let containerScale = 0;
-      let containerOpacity = 0;
-      let borderRadius = 12;
-
-      if (p <= STAGE_2) {
-        let eased = easeInOutCubic(p / STAGE_2);
-        containerScale = 0.08 + (0.35 - 0.08) * eased;
-        containerOpacity = eased;
-        borderRadius = 12;
-      } else if (p > STAGE_2 && p <= STAGE_3) {
-        let eased = easeInOutCubic((p - STAGE_2) / (STAGE_3 - STAGE_2));
-        containerScale = 0.35 + (0.55 - 0.35) * eased;
-        containerOpacity = 1.0;
-        borderRadius = 12;
-      } else if (p > STAGE_3 && p <= STAGE_4) {
-        let eased = easeInOutCubic((p - STAGE_3) / (STAGE_4 - STAGE_3));
-        containerScale = 0.55 + (0.80 - 0.55) * eased;
-        containerOpacity = 1.0;
-        borderRadius = 12;
-      } else if (p > STAGE_4 && p <= STAGE_5) {
-        let eased = easeInOutCubic((p - STAGE_4) / (STAGE_5 - STAGE_4));
-        containerScale = 0.80 + (1.1 - 0.80) * eased;
-        containerOpacity = 1.0;
-        borderRadius = 12 - 6 * eased;
-      } else if (p > STAGE_5 && p <= STAGE_6) {
-        let eased = easeInOutCubic((p - STAGE_5) / (STAGE_6 - STAGE_5));
-        containerScale = 1.1 + (cinematicScaleMax - 1.1) * eased;
-        containerOpacity = 1.0;
-        borderRadius = 6 - 6 * eased;
-      } else {
-        containerScale = cinematicScaleMax;
-        containerOpacity = 1.0;
-        borderRadius = 0;
-      }
-
-      gsap.set(imagesBox, {
-        scale: containerScale,
-        opacity: containerOpacity,
-        borderRadius: borderRadius + 'px'
-      });
-
-      // 3. Image crossfades & subtle scale drift
-      const imgOpacities = [0, 0, 0, 0, 0];
-      const imgScales = [1, 1, 1, 1, 1];
-
-      if (p <= STAGE_2) {
-        imgOpacities[0] = 1;
-        imgScales[0] = 1;
-      } else if (p > STAGE_2 && p <= STAGE_3) {
-        let localP = (p - STAGE_2) / (STAGE_3 - STAGE_2);
-        let easedP = easeInOutCubic(localP);
-        imgOpacities[0] = 1.0 - easedP;
-        imgScales[0] = 1.0 - 0.03 * easedP;
-        imgOpacities[1] = easedP;
-        imgScales[1] = 1.03 - 0.03 * easedP;
-      } else if (p > STAGE_3 && p <= STAGE_4) {
-        let localP = (p - STAGE_3) / (STAGE_4 - STAGE_3);
-        let easedP = easeInOutCubic(localP);
-        imgOpacities[1] = 1.0 - easedP;
-        imgScales[1] = 1.0 - 0.03 * easedP;
-        imgOpacities[2] = easedP;
-        imgScales[2] = 1.03 - 0.03 * easedP;
-      } else if (p > STAGE_4 && p <= STAGE_5) {
-        let localP = (p - STAGE_4) / (STAGE_5 - STAGE_4);
-        let easedP = easeInOutCubic(localP);
-        imgOpacities[2] = 1.0 - easedP;
-        imgScales[2] = 1.0 - 0.03 * easedP;
-        imgOpacities[3] = easedP;
-        imgScales[3] = 1.03 - 0.03 * easedP;
-      } else if (p > STAGE_5 && p <= STAGE_6) {
-        let localP = (p - STAGE_5) / (STAGE_6 - STAGE_5);
-        let easedP = easeInOutCubic(localP);
-        imgOpacities[3] = 1.0 - easedP;
-        imgScales[3] = 1.0 - 0.03 * easedP;
-        imgOpacities[4] = easedP;
-        imgScales[4] = 1.03 - 0.03 * easedP;
-      } else {
-        imgOpacities[4] = 1;
-        imgScales[4] = 1;
-      }
-
-      gsap.set(img1, { opacity: imgOpacities[0], scale: imgScales[0] });
-      gsap.set(img2, { opacity: imgOpacities[1], scale: imgScales[1] });
-      gsap.set(img3, { opacity: imgOpacities[2], scale: imgScales[2] });
-      gsap.set(img4, { opacity: imgOpacities[3], scale: imgScales[3] });
-      gsap.set(img5, { opacity: imgOpacities[4], scale: imgScales[4] });
-
-      // 4. Scroll hint
-      let hintOpacity = p <= 0.02 ? 1.0 - (p / 0.02) : 0;
-      gsap.set(scrollHint, { opacity: hintOpacity });
-
-      // 5. Vignette intensity & About Me reveal (Stage 7)
-      let vignetteOpacity = 0;
-      let aboutOpacity = 0;
-      let aboutY = 50;
-      if (p > STAGE_6) {
-        let localP = (p - STAGE_6) / (STAGE_7 - STAGE_6);
-        let eased = easeInOutCubic(localP);
-        vignetteOpacity = eased * 0.9;
-        aboutOpacity = eased;
-        aboutY = 50 - 50 * eased;
-      }
-      gsap.set(overlay, { opacity: vignetteOpacity });
-      gsap.set(aboutMe, { opacity: aboutOpacity, y: aboutY });
-
-      // 6. Left sidebar progress text & vertical dots update
-      let stageIndex = 0;
-      let label = "INITIAL HERO";
-
-      if (p <= 0.02) {
-        stageIndex = 0;
-        label = "INITIAL HERO";
-      } else if (p > 0.02 && p <= STAGE_2) {
-        stageIndex = 1;
-        label = "LIGHT REVEALS";
-      } else if (p > STAGE_2 && p <= STAGE_3) {
-        stageIndex = 2;
-        label = "OPENS NOTEBOOK";
-      } else if (p > STAGE_3 && p <= STAGE_4) {
-        stageIndex = 3;
-        label = "WRITES MY NAME";
-      } else if (p > STAGE_4 && p <= STAGE_5) {
-        stageIndex = 4;
-        label = "WRITES MY NAME";
-      } else if (p > STAGE_5 && p <= STAGE_6) {
-        stageIndex = 5;
-        label = "NAME COMPLETE";
-      } else {
-        stageIndex = 6;
-        label = "NAME COMPLETE → TRANSITION";
-      }
-
-      document.getElementById('hero-progress-percent').textContent = Math.round(p * 100) + "%";
-      document.getElementById('hero-progress-label').textContent = label;
-
-      const dots = document.querySelectorAll('#hero-right-dots .dot');
-      dots.forEach((dot, idx) => {
-        if (idx === stageIndex) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
-      });
-
-      // 7. Debug console readout
-      if (debugDiv) {
-        debugDiv.innerHTML = `
-          <strong>HERO DIAGNOSTIC PANEL</strong><br>
-          Scroll Progress: ${(p * 100).toFixed(1)}%<br>
-          Target: ${targetProgress.toFixed(3)}<br>
-          Eased Progress: ${smoothedProgress.toFixed(3)}<br>
-          Stage Label: ${label}<br>
-          Preloaded: ${imagesPreloaded ? "YES" : "NO"}
-        `;
-      }
-    }
-
-    // Ticking loop using GSAP ticker
-    function smoothTick() {
-      const diff = targetProgress - smoothedProgress;
-      if (Math.abs(diff) > 0.0001) {
-        smoothedProgress += diff * lerpFactor;
-      } else {
-        smoothedProgress = targetProgress;
-      }
-      updateHeroVisuals(smoothedProgress);
-    }
-
-    gsap.ticker.remove(smoothTick);
-    gsap.ticker.add(smoothTick);
-
-    // Pinning via ScrollTrigger
-    st = ScrollTrigger.create({
-      trigger: wrap,
-      start: 'top top',
-      end: '+=400%',
-      pin: intro,
-      anticipatePin: 1,
-      scrub: true,
-      onUpdate: (self) => {
-        targetProgress = self.progress;
-      }
-    });
-
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-
-  // ─── 2. REUSABLE MASKED TEXT REVEAL (SplitType) ───────────────────────────
-  // type:    'chars' | 'words' | 'lines'
-  // trigger: 'scroll' → ScrollTrigger  |  'load' → immediate (use in timeline)
-  function revealText(target, {
-    type = 'lines',
-    trigger = 'scroll',
-    delay = 0,
-    duration = 0.9,
-    stagger = 0.08,
-    ease = 'power4.out',
-    start = 'top 85%',
-  } = {}) {
-    if (typeof SplitType === 'undefined') return;
-    const elements = typeof target === 'string'
-      ? Array.from(document.querySelectorAll(target))
-      : [target];
-
-    elements.forEach((el) => {
-      if (!el) return;
-      const split = new SplitType(el, { types: type });
-      const items = type === 'chars' ? split.chars
-                  : type === 'words' ? split.words
-                  : split.lines;
-
-      const vars = {
-        yPercent: 110,
-        opacity: type === 'lines' ? 0 : 1,
-        stagger,
-        duration,
-        ease,
-        delay: trigger === 'load' ? delay : 0,
-      };
-
-      if (trigger === 'scroll') {
-        vars.scrollTrigger = { trigger: el, start };
-      }
-
-      gsap.from(items, vars);
-    });
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 3. SCROLL-TRIGGERED LINE REVEALS (.reveal-text) ─────────────────────
-  document.querySelectorAll('.reveal-text').forEach((el) => {
-    revealText(el, { type: 'lines', trigger: 'scroll' });
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 4. BLUR-WORD SCROLL REVEALS (.blur-reveal) ───────────────────────────
-  // Matches lukebaffait about-section: words start opacity:0 + blur(8px),
-  // animate in staggered as section scrolls into view.
-  document.querySelectorAll('.blur-reveal').forEach((el) => {
-    if (typeof SplitType === 'undefined') return;
-    const split = new SplitType(el, { types: 'words' });
-    gsap.to(split.words, {
-      opacity: 1,
-      filter: 'blur(0px)',
-      stagger: 0.06,
-      duration: 0.7,
-      ease: 'power3.out',
-      scrollTrigger: { trigger: el, start: 'top 80%' },
-    });
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 5. GENERIC SECTION FADE-INS (.gs-reveal) ────────────────────────────
-  gsap.utils.toArray('.gs-reveal').forEach((el) => {
-    gsap.fromTo(el,
-      { y: 40, opacity: 0 },
-      {
-        y: 0, opacity: 1, duration: 0.9, ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
-      }
-    );
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 6. STAT COUNTER ANIMATION ───────────────────────────────────────────
-  document.querySelectorAll('.stat-number').forEach((num) => {
-    const target = parseInt(num.getAttribute('data-target'));
-    ScrollTrigger.create({
-      trigger: num, start: 'top 85%', once: true,
-      onEnter: () => {
-        let cur = 0;
-        const inc = target / 40;
-        const timer = setInterval(() => {
-          cur += inc;
-          if (cur >= target) { num.textContent = target; clearInterval(timer); }
-          else { num.textContent = Math.floor(cur); }
-        }, 40);
-      },
-    });
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 7. MAGNETIC BUTTONS (.magnetic-btn) ─────────────────────────────────
-  // Subtle pull toward cursor — snaps back with elastic ease on leave
-  document.querySelectorAll('.magnetic-btn').forEach((btn) => {
-    btn.addEventListener('mousemove', (e) => {
-      const rect = btn.getBoundingClientRect();
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
-      gsap.to(btn, { x: x * 0.35, y: y * 0.35, duration: 0.4, ease: 'power3.out' });
-    });
-    btn.addEventListener('mouseleave', () => {
-      gsap.to(btn, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' });
-    });
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 8. CUSTOM CURSOR (GSAP-driven) ──────────────────────────────────────
-  const cursorDot = document.querySelector('.cursor');
-  const cursorRing = document.querySelector('.cursor-follower');
-
-  if (cursorDot && cursorRing) {
-    gsap.set([cursorDot, cursorRing], { xPercent: -50, yPercent: -50 });
-
-    const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const mouse = { x: pos.x, y: pos.y };
-    const speed = 0.15;
-
-    gsap.ticker.add(() => {
-      pos.x += (mouse.x - pos.x) * speed;
-      pos.y += (mouse.y - pos.y) * speed;
-      gsap.set(cursorRing, { x: pos.x, y: pos.y });
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-      gsap.set(cursorDot, { x: e.clientX, y: e.clientY });
-    });
-
-    // Scale up ring on hoverable elements
-    document.querySelectorAll('a, button, .magnetic-btn, .project-card').forEach((el) => {
-      el.addEventListener('mouseenter', () =>
-        gsap.to(cursorRing, { scale: 2.2, duration: 0.3, ease: 'power2.out' })
-      );
-      el.addEventListener('mouseleave', () =>
-        gsap.to(cursorRing, { scale: 1, duration: 0.3, ease: 'power2.out' })
-      );
-    });
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 9. PAGE TRANSITION WIPE (internal links) ─────────────────────────────
-  // Accent panel wipes up over the page, nav happens, dark panel follows, both wipe away
-  const tPanelAccent = document.getElementById('t-panel-accent');
-  const tPanelDark   = document.getElementById('t-panel-dark');
-
-  function runPageTransition(href) {
-    const tl = gsap.timeline({
-      onComplete: () => { window.location.href = href; },
-    });
-    tl.to(tPanelAccent, { yPercent: 0, duration: 0.45, ease: 'power4.inOut' })
-      .to(tPanelDark,   { yPercent: 0, duration: 0.45, ease: 'power4.inOut' }, '-=0.2');
-  }
-
-  document.querySelectorAll('a[href^="#"]').forEach((link) => {
-    // Anchor links — smooth scroll via Lenis, no page wipe needed
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const target = document.querySelector(link.getAttribute('href'));
-      if (target) lenis.scrollTo(target, { duration: 1.4, easing: (t) => 1 - Math.pow(1 - t, 3) });
-    });
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 10. BACK TO TOP ─────────────────────────────────────────────────────
-  const backToTop = document.getElementById('back-to-top');
-  if (backToTop) {
-    ScrollTrigger.create({
-      start: 500, end: 99999,
-      onToggle: (self) => {
-        gsap.to(backToTop, { opacity: self.isActive ? 1 : 0, duration: 0.3 });
-        backToTop.style.visibility = self.isActive ? 'visible' : 'hidden';
-      },
-    });
-    backToTop.addEventListener('click', () => lenis.scrollTo(0));
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 11. MOBILE MENU ─────────────────────────────────────────────────────
-  const menuBtn = document.querySelector('.menu-btn');
-  const navLinks = document.querySelector('.nav-links');
-  if (menuBtn && navLinks) {
-    menuBtn.addEventListener('click', () => {
-      navLinks.classList.toggle('active');
-      const icon = menuBtn.querySelector('i');
-      icon.classList.toggle('fa-bars');
-      icon.classList.toggle('fa-times');
-    });
-    navLinks.querySelectorAll('a').forEach((item) => {
-      item.addEventListener('click', () => {
-        navLinks.classList.remove('active');
-        const icon = menuBtn.querySelector('i');
-        icon.classList.add('fa-bars');
-        icon.classList.remove('fa-times');
-      });
-    });
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 12. VANILLA TILT ────────────────────────────────────────────────────
-  if (typeof VanillaTilt !== 'undefined') {
-    VanillaTilt.init(document.querySelectorAll('.tech-card'),          { max: 15, speed: 400, glare: true, 'max-glare': 0.2, scale: 1.05 });
-    VanillaTilt.init(document.querySelectorAll('.profile-frame'),      { max: 8,  speed: 400, glare: true, 'max-glare': 0.3, scale: 1.02 });
-    VanillaTilt.init(document.querySelectorAll('.project-card'),        { max: 4,  speed: 400, glare: true, 'max-glare': 0.08, scale: 1.02 });
-    VanillaTilt.init(document.querySelectorAll('.info-block.standout'),{ max: 5,  speed: 400, glare: true, 'max-glare': 0.1, scale: 1.02 });
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 13. TYPED.JS ────────────────────────────────────────────────────────
-  if (typeof Typed !== 'undefined') {
-    const heroDescEl = document.querySelector('.hero-desc');
-    if (heroDescEl) {
-      const originalText = heroDescEl.textContent;
-      heroDescEl.innerHTML = '<span id="typed-hero-desc"></span>';
-      new Typed('#typed-hero-desc', {
-        strings: [originalText, 'Building secure architectures.', 'Transforming ideas into digital reality.', 'Engineering the future.'],
-        typeSpeed: 40, backSpeed: 20, backDelay: 2000,
-        loop: true, showCursor: true, cursorChar: '_',
-      });
-    }
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 14. SPOTLIGHT EFFECT ON CARDS ───────────────────────────────────────
-  document.querySelectorAll('.tech-card, .project-card, .info-block').forEach((card) => {
-    card.classList.add('spotlight-card');
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--x', `${e.clientX - rect.left}px`);
-      card.style.setProperty('--y', `${e.clientY - rect.top}px`);
-    });
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 15. CURSOR CLICK RIPPLE ─────────────────────────────────────────────
-  document.addEventListener('click', (e) => {
-    const ripple = document.createElement('div');
-    ripple.className = 'cursor-click';
-    ripple.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;width:40px;height:40px`;
-    document.body.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 500);
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 16. SCROLL PROGRESS BAR ─────────────────────────────────────────────
-  const scrollProgress = document.getElementById('scroll-progress');
-  if (scrollProgress) {
-    window.addEventListener('scroll', () => {
-      const total = document.documentElement.scrollTop;
-      const max   = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      scrollProgress.style.width = `${(total / max) * 100}%`;
-    });
-  }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 17. GOAL PROGRESS BARS ──────────────────────────────────────────────
-  document.querySelectorAll('.goal-bar').forEach((bar) => {
-    const progress = bar.style.getPropertyValue('--progress');
-    bar.style.width = '0%';
-    ScrollTrigger.create({
-      trigger: bar, start: 'top 90%', once: true,
-      onEnter: () => setTimeout(() => { bar.style.width = progress; }, 200),
-    });
-  });
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 18. THREE.JS 3D SCENE (Piece 1: Canvas + 3D Geometry) ─────────────────
-  function initThreeScene() {
-    const canvas = document.getElementById('webgl-canvas');
-    const container = document.getElementById('Scene3D');
-    if (!canvas || !container || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-
-    const getWidth = () => container.clientWidth || window.innerWidth;
-    const getHeight = () => container.clientHeight || window.innerHeight;
-
-    const camera = new THREE.PerspectiveCamera(45, getWidth() / getHeight(), 0.1, 100);
-    camera.position.set(0, 0, 7);
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    renderer.setSize(getWidth(), getHeight());
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // 3D Object Group (Torus Knot with dark core + accent wireframe)
-    const meshGroup = new THREE.Group();
-
-    // Base geometry
-    const geometry = new THREE.TorusKnotGeometry(1.6, 0.45, 128, 32);
-
-    // Inner dark material
-    const innerMaterial = new THREE.MeshStandardMaterial({
-      color: 0x0a0c10,
-      metalness: 0.85,
-      roughness: 0.25,
-      wireframe: false,
-    });
-    const innerMesh = new THREE.Mesh(geometry, innerMaterial);
-    meshGroup.add(innerMesh);
-
-    // Outer wireframe with portfolio neon accent
-    const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: 0xe0ff00,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.4,
-    });
-    const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
-    meshGroup.add(wireframeMesh);
-
-    scene.add(meshGroup);
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-
-    const keyLight = new THREE.DirectionalLight(0xe0ff00, 1.8);
-    keyLight.position.set(5, 5, 5);
-    scene.add(keyLight);
-
-    const fillLight = new THREE.PointLight(0x00f0ff, 2.0, 50);
-    fillLight.position.set(-5, -3, 3);
-    scene.add(fillLight);
-
-    // Store references on window for subsequent scrub integration
-    window.threeSceneObj = {
-      scene,
-      camera,
-      renderer,
-      meshGroup,
+      this.x += this.directionX;
+      this.y += this.directionY;
+      this.draw();
     };
 
-    // ─── Scroll-Scrubbed Motion (Piece 2) ───────────────────────────
-    const scrubData = {
-      rotX: -0.4,
-      rotY: -0.8,
-      rotZ: -0.2,
-      camZ: 8.5,
-      posY: -0.6,
-    };
-
-    gsap.timeline({
-      scrollTrigger: {
-        trigger: container,
-        start: 'top bottom',
-        end: 'bottom top',
-        scrub: 1.2,
-      },
-    })
-    .fromTo(
-      scrubData,
-      { rotX: -0.4, rotY: -0.8, rotZ: -0.2, camZ: 8.5, posY: -0.6 },
-      {
-        rotX: Math.PI * 2.2,
-        rotY: Math.PI * 3.4,
-        rotZ: Math.PI * 1.2,
-        camZ: 5.4,
-        posY: 0.6,
-        ease: 'none',
+    function build() {
+      particles = [];
+      var count = Math.min(90, (canvas.height * canvas.width) / 15000);
+      for (var i = 0; i < count; i++) {
+        var size = (Math.random() * 2) + 1;
+        particles.push(new Particle(
+          Math.random() * (innerWidth - size * 4) + size * 2,
+          Math.random() * (innerHeight - size * 4) + size * 2,
+          (Math.random() * 2) - 1,
+          (Math.random() * 2) - 1,
+          size,
+          'rgba(224, 255, 0, 0.5)'
+        ));
       }
-    );
-
-    // ─── 3D Text Overlay Scroll-Scrub Reveal (Piece 3) ──────────────
-    const overlay = container.querySelector('.scene-3d-overlay');
-    if (overlay) {
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: container,
-          start: 'top 55%',
-          end: 'bottom 45%',
-          scrub: 1,
-        },
-      })
-      .fromTo(
-        overlay,
-        { opacity: 0, y: 50 },
-        { opacity: 1, y: 0, ease: 'power2.out', duration: 1 }
-      )
-      .to(overlay, { opacity: 0, y: -40, ease: 'power2.in', duration: 0.8 });
     }
 
-    // Render loop combining scroll scrub + subtle organic idle rotation
-    let rafId;
-    let idleRotX = 0;
-    let idleRotY = 0;
-
-    function renderLoop() {
-      rafId = requestAnimationFrame(renderLoop);
-
-      idleRotX += 0.0015;
-      idleRotY += 0.0025;
-
-      meshGroup.rotation.x = scrubData.rotX + idleRotX;
-      meshGroup.rotation.y = scrubData.rotY + idleRotY;
-      meshGroup.rotation.z = scrubData.rotZ;
-      meshGroup.position.y = scrubData.posY;
-
-      camera.position.z = scrubData.camZ;
-
-      renderer.render(scene, camera);
-    }
-    renderLoop();
-
-    // Resize handling
-    window.addEventListener('resize', () => {
-      const w = getWidth();
-      const h = getHeight();
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    });
-  }
-
-  initThreeScene();
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ─── 19. CIRCULAR IMAGE GALLERY (Reference 3D Orbit + Finite Timeline) ────
-  function initCircleGallery() {
-    const cgSection = document.getElementById('Projects') || document.getElementById('circle-gallery');
-    if (!cgSection) return;
-
-    // Single Project Data Source (6 Projects)
-    const PROJECTS_DATA = [
-      {
-        num: "01 / 06",
-        title: "SMART WEB PENTESTING",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "02 / 06",
-        title: "SKILLBRIDGE",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "03 / 06",
-        title: "NAVILENS AR",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "04 / 06",
-        title: "VAXI-TRACK",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "05 / 06",
-        title: "AI CATTLE RECOGNITION",
-        github: "https://github.com/ponram06"
-      },
-      {
-        num: "06 / 06",
-        title: "INTERACTIVE ARCHITECTURES",
-        github: "https://github.com/ponram06"
-      }
-    ];
-
-    function isMobileViewport() {
-      return window.innerWidth <= 768;
-    }
-
-    if (isMobileViewport()) return;
-
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    // Build cylindrical slices for image curvature (Exact Reference Logic)
-    (function buildSlices() {
-      const SLICES = 10;
-      const imgW = Math.min(Math.max(130, vw * 0.15), 210);
-      const imgH = imgW * 2 / 3;
-      const orbitR = (vw * 0.38 + 520) / 2;
-      const bendRad = imgW / orbitR;
-      const cylR = orbitR;
-      const sliceW = imgW / SLICES;
-      const totalBendDeg = bendRad * 180 / Math.PI;
-      const stepDeg = totalBendDeg / SLICES;
-
-      cgSection.querySelectorAll('.cg-img').forEach(function (img) {
-        if (img.tagName !== 'IMG') return; // Prevent double-slicing
-        const src = img.getAttribute('src');
-        const wrapper = document.createElement('div');
-        wrapper.className = 'cg-img';
-
-        for (let s = 0; s < SLICES; s++) {
-          const sl = document.createElement('div');
-          sl.className = 'cg-slice';
-          const displayW = sliceW + 1.5;
-          sl.style.width = displayW.toFixed(1) + 'px';
-          sl.style.left = '50%';
-          sl.style.marginLeft = (-displayW / 2).toFixed(1) + 'px';
-          sl.style.backgroundImage = 'url("' + src + '")';
-          sl.style.backgroundSize = imgW.toFixed(1) + 'px ' + imgH.toFixed(1) + 'px';
-          sl.style.backgroundPosition = (-s * sliceW).toFixed(1) + 'px 0';
-          sl.style.transformOrigin = '50% 50% ' + (-cylR).toFixed(1) + 'px';
-          const angle = (s - (SLICES - 1) / 2) * stepDeg;
-          sl.style.transform = 'rotateY(' + angle.toFixed(2) + 'deg)';
-          wrapper.appendChild(sl);
-        }
-
-        img.parentNode.replaceChild(wrapper, img);
-      });
-    })();
-
-    const cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
-    const cgPhrase = cgSection.querySelector('#cg-phrase');
-    const cgCenterUI = cgSection.querySelector('#cg-center-ui');
-    const cgCounter = cgSection.querySelector('#cg-counter');
-    const cgTitle = cgSection.querySelector('#cg-title');
-    const cgBtn = cgSection.querySelector('#cg-btn');
-
-    const count = cgImgs.length;
-
-    // Wrap phrase words for blur-to-sharp reveal (Exact Reference Logic)
-    (function wrapPhraseWords(el) {
-      if (!el) return;
-      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      const textNodes = [];
-      while (walker.nextNode()) textNodes.push(walker.currentNode);
-      textNodes.forEach(function (node) {
-        const words = node.textContent.split(/(\s+)/);
-        const frag = document.createDocumentFragment();
-        words.forEach(function (w) {
-          if (/^\s+$/.test(w)) {
-            frag.appendChild(document.createTextNode(w));
-          } else if (w) {
-            const span = document.createElement('span');
-            span.className = 'word';
-            span.textContent = w;
-            frag.appendChild(span);
+    function connect() {
+      var limit = (canvas.width / 7) * (canvas.height / 7);
+      for (var a = 0; a < particles.length; a++) {
+        for (var b = a + 1; b < particles.length; b++) {
+          var dx = particles[a].x - particles[b].x;
+          var dy = particles[a].y - particles[b].y;
+          var d = dx * dx + dy * dy;
+          if (d < limit) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, ' + ((1 - d / 20000) * 0.2) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particles[a].x, particles[a].y);
+            ctx.lineTo(particles[b].x, particles[b].y);
+            ctx.stroke();
           }
+        }
+      }
+    }
+
+    function loop() {
+      rafId = requestAnimationFrame(loop);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < particles.length; i++) particles[i].update();
+      connect();
+    }
+
+    window.addEventListener('resize', function () {
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+      build();
+    }, { passive: true });
+
+    function stop() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
+    function start() { if (!rafId && !document.hidden) loop(); }
+
+    /* Stop burning frames on a backgrounded tab */
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stop(); else start();
+    });
+
+    build();
+    loop();
+  }
+
+  /* ─── everything below waits for the DOM ─────────────────────────────── */
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    initParticles();
+
+    /* ─── 2. CINEMATIC INTRO ─────────────────────────────────────────────
+       One continuous sequence, told in real time rather than by scroll:
+
+         black  →  "Every story begins with a name."  →  the line dissolves
+         as the Death Note scene emerges  →  the video plays through and
+         Kira writes the name  →  the video's own fade to black carries
+         straight into the existing Hero.
+
+       Real-time, not scrubbed, on purpose: the source MP4 carries only two
+       keyframes across its ten seconds, so seeking has to decode from up to
+       five seconds away. Scrubbing it stutters badly; playback is smooth.
+       Smoothness over technique, as specified. */
+
+    /* The hook is a fixed overlay that only ever does one thing: black ->
+       "Every story begins with a name." -> dissolve -> fade to black ->
+       get out of the way. No video, no waiting on decoders — just a GSAP
+       timeline, so this stage is never the source of any stutter. */
+    function runIntroSequence(onDone) {
+      var seq = document.getElementById('intro-seq');
+      var line = document.getElementById('intro-line');
+      var veil = document.getElementById('intro-veil');
+      var skipBtn = document.getElementById('intro-skip');
+      var root = document.documentElement;
+
+      var done = false;
+      function complete() {
+        if (done) return;
+        done = true;
+        if (onDone) onDone();
+      }
+
+      if (!seq || !line || typeof gsap === 'undefined') {
+        if (seq) seq.classList.add('is-done');
+        complete();
+        return;
+      }
+
+      /* Reduced motion: no sequence at all, straight to the portfolio. */
+      if (env.reduced) {
+        seq.classList.add('is-done');
+        complete();
+        return;
+      }
+
+      root.classList.add('intro-active');
+      if (PM && PM.lenis) PM.lenis.stop();
+
+      var listeners = [];
+      function on(el, ev, fn, opts) {
+        el.addEventListener(ev, fn, opts);
+        listeners.push(function () { el.removeEventListener(ev, fn, opts); });
+      }
+
+      var tl = null;
+      var safetyTimer = null;
+      var teardownDone = false;
+
+      function teardown() {
+        if (teardownDone) return;
+        teardownDone = true;
+        clearTimeout(safetyTimer);
+        listeners.forEach(function (off) { off(); });
+        listeners.length = 0;
+        if (tl) { tl.kill(); tl = null; }
+        seq.classList.add('is-done');
+        root.classList.remove('intro-active');
+        /* Scroll stays unlocked here — the Kira sequence right below is what
+           the visitor now scrolls through, full black at rest. */
+        if (PM && PM.lenis) PM.lenis.start();
+        complete();
+      }
+
+      function finishHook(duration) {
+        if (teardownDone) return;
+        gsap.to(veil, {
+          opacity: 1,
+          duration: duration != null ? duration : 0.7,
+          ease: 'power2.inOut',
+          onComplete: teardown
         });
-        node.parentNode.replaceChild(frag, node);
+      }
+
+      /* -- opening line ------------------------------------------------- */
+      var words = [line];
+      if (PM && PM.splitMaskedWords) {
+        var split = PM.splitMaskedWords(line);
+        if (split && split.words && split.words.length) words = split.words;
+      }
+
+      gsap.set(veil, { opacity: 0 });
+      gsap.set(words, { yPercent: 118, opacity: 0, filter: 'blur(9px)' });
+      if (skipBtn) gsap.set(skipBtn, { opacity: 0 });
+
+      tl = gsap.timeline({ onComplete: function () { finishHook(0.75); } });
+      tl.to(words, {
+        yPercent: 0,
+        opacity: 1,
+        filter: 'blur(0px)',
+        duration: 1.25,
+        stagger: 0.055,
+        ease: 'power4.out'
+      }, 0.28);
+      if (skipBtn) tl.to(skipBtn, { opacity: 1, duration: 0.6 }, 1.1);
+      /* Hold on the finished line so it can actually be read. */
+      tl.to({}, { duration: 1.1 }, '+=0');
+      tl.to(words, {
+        yPercent: -46,
+        opacity: 0,
+        filter: 'blur(12px)',
+        duration: 0.9,
+        stagger: 0.03,
+        ease: 'power3.in'
       });
-    })(cgPhrase);
+      if (skipBtn) tl.to(skipBtn, { opacity: 0, duration: 0.35 }, '<');
 
-    const cgPhraseWords = cgPhrase ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
+      /* -- escape hatch ---------------------------------------------------
+         Skip jumps straight past the hook. It intentionally does NOT skip
+         the Kira sequence itself — that one is scroll-driven, so "skip" for
+         it is just "scroll", which the visitor already knows how to do. */
+      if (skipBtn) on(skipBtn, 'click', function () { finishHook(0.4); });
+      on(document, 'keydown', function (e) {
+        if (e.key === 'Escape') finishHook(0.35);
+      });
 
-    // Responsive Safe Orbit Geometry (Guarantees no card touches or crosses viewport edges)
-    const cardW = Math.min(Math.max(120, vw * 0.095), 175);
-    const cardH = cardW * 2 / 3;
-    const cardHalfW = cardW / 2;
-    const cardHalfH = cardH / 2;
-
-    const safeMarginX = 55;
-    const safeMarginY = 45;
-
-    // Responsive safe orbit radius bounds:
-    const maxSafeRx = (vw / 2) - cardHalfW - safeMarginX;
-    const rx = Math.max(140, Math.min(maxSafeRx, vw * 0.32));
-
-    const maxSafeTiltY = (vh / 2) - cardHalfH - safeMarginY - 140;
-    const tiltY = Math.max(50, Math.min(maxSafeTiltY, vh * 0.22));
-
-    const rz = Math.min(420, rx * 0.85);
-    const entryAngle = Math.PI / 2;
-
-    function getPosForAngle(angle) {
-      const x = Math.cos(angle) * rx;
-      const z = Math.sin(angle) * rz;
-
-      // Subtle inward perspective tilt (-12deg to +12deg), clamped strictly, NEVER flipping
-      const rotYDeg = Math.max(-12, Math.min(12, (x / rx) * -10));
-
-      // Protected Center Safe Zone Offset:
-      // When image passes through central content area (|x| < 300px), push Y offset away from text
-      const distFromCenter = Math.abs(x);
-      const centerFactor = 1 - Math.min(1, distFromCenter / 300);
-      const verticalClearance = (z >= 0 ? 145 : -145) * centerFactor;
-
-      return {
-        x: x,
-        y: (z / rz) * tiltY + verticalClearance,
-        z: z,
-        rotYDeg: rotYDeg
-      };
+      /* Absolute backstop: never leave anyone stuck on the overlay. */
+      safetyTimer = setTimeout(function () { finishHook(0.4); }, 12000);
     }
 
-    const pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
-    let currentActiveIdx = -999;
-    let currentMode = 'NONE'; // 'INTRO', 'GALLERY', 'ENDING'
+    /* ─── 2b. KIRA / DEATH NOTE SEQUENCE ─────────────────────────────────
+       Scroll-driven, reusing the same pin + lerped-scrub pattern as the Hero
+       below it — proven smooth (opacity/scale crossfades only, no video
+       decode). At progress 0 every frame is transparent, so the section is
+       pure black until the visitor scrolls. `html.pre-kira` keeps nav and
+       the Hero name hidden for exactly as long as this section is on screen;
+       it is removed once the visitor scrolls past it and restored if they
+       scroll back up into it. */
+    var kiraST = null;
+    var kiraTick = null;
 
-    function renderCenterUI(idx) {
-      if (!cgCenterUI) return;
-      const p = PROJECTS_DATA[idx];
-      if (!p) return;
+    function initKiraScroll() {
+      var root = document.documentElement;
+      var wrap = document.getElementById('kira-scroll-wrapper');
+      var section = document.getElementById('KiraIntro');
+      var vignette = document.getElementById('kira-vignette');
+      var hint = document.getElementById('kira-scroll-hint');
+      var imgs = [1, 2, 3, 4, 5].map(function (n) {
+        return document.getElementById('kira-img-' + n);
+      });
 
-      gsap.to(cgCenterUI, {
-        opacity: 0,
-        y: 12,
-        filter: 'blur(5px)',
-        duration: 0.18,
-        ease: 'power2.in',
-        onComplete: function () {
-          if (cgCounter) cgCounter.textContent = p.num;
-          if (cgTitle) cgTitle.textContent = p.title;
-          if (cgBtn) {
-            cgBtn.href = p.github;
-            cgBtn.style.display = 'inline-flex';
+      if (env.reduced || !wrap || !section || imgs.some(function (i) { return !i; })) {
+        /* No pinned reveal (CSS hides the wrapper under reduced motion, and
+           without the elements there is nothing to pin) — chrome must not
+           stay hidden waiting for a sequence that will never run. */
+        root.classList.remove('pre-kira');
+        return;
+      }
+
+      imgs.forEach(function (img) {
+        img.decoding = 'async';
+        if (img.decode) img.decode().catch(function () { /* cached or racing */ });
+      });
+
+      gsap.set(imgs, { opacity: 0, scale: 1.05 });
+      gsap.set(vignette, { opacity: 0 });
+      gsap.set(hint, { opacity: 0 });
+
+      /* Five frames -> four crossfade bands, evenly spaced, each with holds
+         either side so a frame is actually seen before the next arrives. */
+      var INTRO_END = 0.10;
+      var FRAME_BANDS = [
+        [0.16, 0.27, 0, 1],
+        [0.39, 0.50, 1, 2],
+        [0.62, 0.73, 2, 3],
+        [0.85, 0.93, 3, 4]
+      ];
+      var LAST_BAND = FRAME_BANDS[FRAME_BANDS.length - 1];
+
+      /* One pass, one unambiguous answer for every p in [0,1]: fading in
+         from black, holding on a frame, crossfading between two, or holding
+         on the last frame. No band above ever needs to "undo" a write made
+         by another. */
+      function frameState(p) {
+        var op = [0, 0, 0, 0, 0];
+        var sc = [1, 1, 1, 1, 1];
+
+        if (p <= INTRO_END) {
+          var e0 = easeInOutCubic(band(p, 0, INTRO_END));
+          op[0] = e0;
+          sc[0] = lerpN(1.05, 1, e0);
+          return { op: op, sc: sc };
+        }
+
+        if (p <= FRAME_BANDS[0][0]) { op[0] = 1; return { op: op, sc: sc }; }
+        if (p >= LAST_BAND[1]) { op[4] = 1; return { op: op, sc: sc }; }
+
+        for (var i = 0; i < FRAME_BANDS.length; i++) {
+          var b = FRAME_BANDS[i];
+          if (p >= b[0] && p <= b[1]) {
+            var e = easeInOutCubic(band(p, b[0], b[1]));
+            op[b[2]] = 1 - e; sc[b[2]] = lerpN(1, 1.04, e);
+            op[b[3]] = e;     sc[b[3]] = lerpN(1.06, 1, e);
+            return { op: op, sc: sc };
           }
+          var next = FRAME_BANDS[i + 1];
+          if (p > b[1] && (!next || p < next[0])) {
+            /* Between this transition and the next: hold on the frame that
+               just finished fading in. */
+            op[b[3]] = 1;
+            return { op: op, sc: sc };
+          }
+        }
+        return { op: op, sc: sc };
+      }
 
-          gsap.to(cgCenterUI, {
-            opacity: 1,
-            y: 0,
-            filter: 'blur(0px)',
-            duration: 0.25,
-            ease: 'power2.out'
+      function render(p) {
+        var state = frameState(p);
+        for (var i = 0; i < 5; i++) {
+          setStyle(imgs[i], 'opacity', state.op[i].toFixed(3));
+          setStyle(imgs[i], 'transform', 'scale(' + state.sc[i].toFixed(4) + ')');
+        }
+
+        /* 2. Scroll hint: on once the black beat has passed, off once
+              scrolling has clearly begun. */
+        var hintOn = band(p, 0.02, 0.07);
+        var hintOff = band(p, 0.1, 0.16);
+        setStyle(hint, 'opacity', Math.max(0, hintOn - hintOff).toFixed(3));
+
+        /* 3. Hold on the finished name, then vignette out into the Hero. */
+        var outE = easeInOutCubic(band(p, 0.94, 1.0));
+        setStyle(vignette, 'opacity', (outE * 0.95).toFixed(3));
+      }
+
+      var target = 0;
+      var current = 0;
+      var settled = true;
+
+      kiraTick = function () {
+        var diff = target - current;
+        if (Math.abs(diff) < 0.00012) {
+          if (settled) return;
+          current = target;
+          settled = true;
+        } else {
+          current += diff * 0.105;
+          settled = false;
+        }
+        render(current);
+      };
+      gsap.ticker.add(kiraTick);
+
+      if (kiraST) kiraST.kill();
+      kiraST = ScrollTrigger.create({
+        trigger: wrap,
+        start: 'top top',
+        end: env.mobile ? '+=280%' : '+=340%',
+        pin: section,
+        anticipatePin: 1,
+        scrub: true,
+        invalidateOnRefresh: true,
+        /* Sits above the Hero and Projects in the document, so it has to be
+           measured/pinned first — the exact ordering rule that fixed the
+           Projects-over-Hero layering bug last time. */
+        refreshPriority: 20,
+        onUpdate: function (self) { target = self.progress; settled = false; },
+        onLeave: function () { root.classList.remove('pre-kira'); },
+        onEnterBack: function () { root.classList.add('pre-kira'); }
+      });
+
+      render(0);
+    }
+
+    /* The hook hands over to the scroll experience: both pinned sequences
+       are built, the scroll-spy is re-anchored now the pin-spacers exist,
+       then the Hero's own entrance choreography plays. Kira itself needs no
+       "start" — it is already sitting at scrollY 0, full black, waiting. */
+    var scrollExperienceStarted = false;
+
+    function beginScrollExperience() {
+      if (scrollExperienceStarted) return;
+      scrollExperienceStarted = true;
+      requestAnimationFrame(function () {
+        if (PM) PM.refresh();
+        initKiraScroll();
+        initHeroCinematicScroll();
+        if (PM) {
+          PM.rebuildScrollSpy();
+          PM.refresh();
+          PM.playIntro();
+        }
+      });
+    }
+
+    runIntroSequence(beginScrollExperience);
+
+
+    /* ─── 3. HERO SCROLL SEQUENCE ────────────────────────────────────────
+       The Death Note story is told by the intro now, so the Hero is simply
+       the name — it rises from the bottom edge, parts, and hands over to
+       About:
+
+         0.00 → 0.34  RISE   name travels up from the bottom to centre
+         0.34 → 0.62  SPLIT  halves part and the title scales back
+         0.62 → 0.86  EXIT   halves leave frame and fade
+         0.82 → 1.00  HAND-OFF  vignette + ABOUT ME
+
+       Scroll input is lerped before it reaches the renderer, and every write
+       is diffed against the last value, so a frame that changes nothing costs
+       nothing. */
+
+    var heroST = null;
+    var heroTick = null;
+
+    function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+    function band(p, a, b) { return clamp01((p - a) / (b - a)); }
+    function lerpN(a, b, t) { return a + (b - a) * t; }
+    function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function easeOutExpo(t) { return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t); }
+
+    /* Only touch the DOM when a value actually changes. */
+    function setStyle(el, prop, val) {
+      if (!el) return;
+      var cache = el.__pmStyle || (el.__pmStyle = {});
+      if (cache[prop] === val) return;
+      cache[prop] = val;
+      el.style[prop] = val;
+    }
+
+    function initHeroCinematicScroll() {
+      var wrap = document.getElementById('hero-scroll-wrapper');
+      var intro = document.getElementById('Intro');
+      var nameLeft = document.getElementById('hero-name-left');
+      var nameRight = document.getElementById('hero-name-right');
+      var titleGroup = document.getElementById('hero-title-group');
+      var overlay = document.getElementById('hero-vignette-overlay');
+      var scrollHint = document.getElementById('hero-scroll-hint');
+      var indicator = document.getElementById('hero-scroll-indicator');
+      var aboutMe = document.getElementById('about-me-reveal');
+
+      if (!wrap || !intro || !nameLeft || !nameRight || !titleGroup || !overlay || !aboutMe) {
+        console.warn('[Hero] Required elements missing for the scroll sequence.');
+        return;
+      }
+
+      /* -- reduced motion: one static screen, no scrubbing --------------- */
+      if (env.reduced) {
+        setStyle(titleGroup, 'transform', 'none');
+        [nameLeft, nameRight].forEach(function (el) {
+          setStyle(el, 'transform', 'none');
+          setStyle(el, 'opacity', '1');
+        });
+        return;
+      }
+
+      /* -- geometry, re-measured on every refresh ------------------------ */
+      var vw, vh, isMobile, riseY, splitX, splitXMax;
+
+      function measure() {
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        isMobile = vw <= 768;
+
+        /* Distance the name travels: from resting near the bottom edge up to
+           the vertical centre. Measured from the title's own height so it
+           lands the same on any viewport. */
+        var prev = titleGroup.style.transform;
+        titleGroup.style.transform = 'none';
+        var titleH = titleGroup.getBoundingClientRect().height || 140;
+        titleGroup.style.transform = prev;
+        if (titleGroup.__pmStyle) delete titleGroup.__pmStyle.transform;
+
+        riseY = Math.max(0, (vh / 2) - (titleH / 2) - (isMobile ? 104 : 138));
+
+        /* On-screen separation of the two halves, in real pixels. Tuned so
+           neither half clips a viewport edge once the title has scaled back. */
+        splitX = isMobile ? vw * 0.17 : vw * 0.20;
+        splitXMax = isMobile ? vw * 0.62 : vw * 0.56;
+      }
+      measure();
+
+      function render(p) {
+        /* 1. RISE, then recede — as the name parts it also scales back,
+              which keeps both halves inside the viewport at display size. */
+        var riseE = easeOutExpo(band(p, 0, 0.34));
+        var splitE = easeInOutCubic(band(p, 0.34, 0.62));
+        var exitE = easeInOutCubic(band(p, 0.62, 0.86));
+
+        var titleScale = lerpN(1, 0.62, splitE);
+        setStyle(titleGroup, 'transform',
+          'translate3d(0,' + (riseY * (1 - riseE)).toFixed(1) + 'px,0) scale(' +
+          titleScale.toFixed(4) + ')');
+
+        /* 2. SPLIT then EXIT. The halves sit inside the scaled group, so a
+              translation of `t` moves them `t * titleScale` on screen —
+              divide it back out to work in real pixels. */
+        var visualX = splitX * splitE + (splitXMax - splitX) * exitE;
+        var x = visualX / titleScale;
+        var nameOpacity = 1 - 0.3 * splitE - 0.7 * exitE;
+
+        setStyle(nameLeft, 'transform', 'translate3d(' + (-x).toFixed(1) + 'px,0,0)');
+        setStyle(nameRight, 'transform', 'translate3d(' + x.toFixed(1) + 'px,0,0)');
+        var nameOpStr = nameOpacity.toFixed(3);
+        setStyle(nameLeft, 'opacity', nameOpStr);
+        setStyle(nameRight, 'opacity', nameOpStr);
+
+        /* 3. Scroll cue clears on the first flick of the wheel */
+        var hint = (1 - band(p, 0.005, 0.06)).toFixed(3);
+        if (scrollHint) setStyle(scrollHint, 'opacity', hint);
+        if (indicator) setStyle(indicator, 'opacity', hint);
+
+        /* 4. HAND-OFF into the rest of the page */
+        var outE = easeInOutCubic(band(p, 0.82, 1.0));
+        setStyle(overlay, 'opacity', (outE * 0.92).toFixed(3));
+        setStyle(aboutMe, 'opacity', outE.toFixed(3));
+        setStyle(aboutMe, 'transform',
+          'translate3d(-50%,-50%,0) translateY(' + (40 * (1 - outE)).toFixed(1) + 'px)');
+      }
+
+      /* -- scrub smoothing ------------------------------------------------
+         Raw wheel/trackpad progress is jittery. Easing it toward the target
+         each frame is what makes the sequence feel like film rather than a
+         slider. Settles fully so we stop writing once the user stops. */
+      var target = 0;
+      var current = 0;
+      var settled = true;
+
+      heroTick = function () {
+        var diff = target - current;
+        if (Math.abs(diff) < 0.00012) {
+          if (settled) return;
+          current = target;
+          settled = true;
+        } else {
+          current += diff * 0.105;
+          settled = false;
+        }
+        render(current);
+      };
+
+      gsap.ticker.add(heroTick);
+
+      if (heroST) heroST.kill();
+      heroST = ScrollTrigger.create({
+        trigger: wrap,
+        start: 'top top',
+        end: env.mobile ? '+=220%' : '+=260%',
+        pin: intro,
+        anticipatePin: 1,
+        scrub: true,
+        invalidateOnRefresh: true,
+        /* The gallery's pin is created first (this one waits for the intro),
+           so without an explicit order ScrollTrigger measures the gallery
+           against a layout that does not yet include the hero's pin-spacer.
+           Pins must refresh top-of-page first: highest priority wins. */
+        refreshPriority: 10,
+        onRefresh: function () { measure(); settled = false; },
+        onUpdate: function (self) { target = self.progress; settled = false; }
+      });
+
+      render(0);
+    }
+
+
+    /* ─── 4. STAT COUNTERS ─────────────────────────────────────────────── */
+
+    document.querySelectorAll('.stat-number').forEach(function (num) {
+      var target = parseInt(num.getAttribute('data-target'), 10);
+      if (isNaN(target)) return;
+
+      if (env.reduced) { num.textContent = target; return; }
+
+      ScrollTrigger.create({
+        trigger: num,
+        start: 'top 88%',
+        once: true,
+        onEnter: function () {
+          var counter = { v: 0 };
+          gsap.to(counter, {
+            v: target,
+            duration: 1.6,
+            ease: 'power2.out',
+            onUpdate: function () { num.textContent = Math.round(counter.v); },
+            onComplete: function () { num.textContent = target; }
           });
         }
       });
+    });
+
+    /* ─── 5. BACK TO TOP + MOBILE MENU ─────────────────────────────────── */
+
+    var backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+      ScrollTrigger.create({
+        start: 500,
+        end: 99999,
+        onToggle: function (self) {
+          gsap.to(backToTop, { opacity: self.isActive ? 1 : 0, duration: 0.3 });
+          backToTop.style.visibility = self.isActive ? 'visible' : 'hidden';
+        }
+      });
+      backToTop.addEventListener('click', function () {
+        if (PM) PM.scrollTo(0, { duration: 1.6 });
+        else window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     }
 
-    ScrollTrigger.create({
-      trigger: cgSection,
-      start: 'top top',
-      end: 'bottom bottom',
-      pin: pinEl,
-      anticipatePin: 1,
-      onUpdate: function (self) {
-        const progress = self.progress;
+    var menuBtn = document.querySelector('.menu-btn');
+    var navLinks = document.querySelector('.nav-links');
+    if (menuBtn && navLinks) {
+      var items = navLinks.querySelectorAll('li');
 
-        // ─── FINITE TIMELINE STATES ───
-        // progress 0.00 - 0.10: STATE 0 (Intro Phrase)
-        // progress 0.10 - 0.85: GALLERY PHASE (Projects 01/06 -> 06/06)
-        // progress 0.85 - 1.00: FINAL STATE (Ending Phrase)
+      function setMenu(open) {
+        navLinks.classList.toggle('active', open);
+        var icon = menuBtn.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-bars', !open);
+          icon.classList.toggle('fa-times', open);
+        }
+        /* Lenis must not keep scrolling the page behind an open overlay */
+        if (PM && PM.lenis) open ? PM.lenis.stop() : PM.lenis.start();
 
-        const isIntro = progress <= 0.10;
-        const isEnding = progress >= 0.85;
-        const isGallery = !isIntro && !isEnding;
+        if (open && !env.reduced) {
+          gsap.fromTo(items,
+            { y: 26, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5, stagger: 0.06, ease: 'power3.out' });
+        }
+      }
 
-        // 1. Staging Intro & Ending Phrase vs Project Center UI
+      menuBtn.addEventListener('click', function () {
+        setMenu(!navLinks.classList.contains('active'));
+      });
+      navLinks.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () { setMenu(false); });
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && navLinks.classList.contains('active')) setMenu(false);
+      });
+    }
+
+    /* ─── 6. TILT / SPOTLIGHT / CLICK RIPPLE ───────────────────────────── */
+
+    if (typeof VanillaTilt !== 'undefined' && env.pointerFX) {
+      VanillaTilt.init(document.querySelectorAll('.tech-card'),
+        { max: 12, speed: 500, glare: true, 'max-glare': 0.18, scale: 1.04 });
+      VanillaTilt.init(document.querySelectorAll('.info-block.standout'),
+        { max: 4, speed: 500, glare: true, 'max-glare': 0.08, scale: 1.01 });
+    }
+
+    if (env.pointerFX) {
+      var spotFrame = null;
+      document.querySelectorAll('.tech-card, .info-block').forEach(function (card) {
+        card.classList.add('spotlight-card');
+        card.addEventListener('mousemove', function (e) {
+          if (spotFrame) return;
+          var cx = e.clientX, cy = e.clientY;
+          spotFrame = requestAnimationFrame(function () {
+            spotFrame = null;
+            var rect = card.getBoundingClientRect();
+            card.style.setProperty('--x', (cx - rect.left) + 'px');
+            card.style.setProperty('--y', (cy - rect.top) + 'px');
+          });
+        });
+      });
+
+      document.addEventListener('click', function (e) {
+        var ripple = document.createElement('div');
+        ripple.className = 'cursor-click';
+        ripple.style.cssText = 'left:' + e.clientX + 'px;top:' + e.clientY + 'px;width:40px;height:40px';
+        document.body.appendChild(ripple);
+        setTimeout(function () { ripple.remove(); }, 500);
+      });
+    }
+
+    /* ─── 7. THREE.JS SCENE ────────────────────────────────────────────── */
+
+    function initThreeScene() {
+      var canvas = document.getElementById('webgl-canvas');
+      var container = document.getElementById('Scene3D');
+      if (!canvas || !container || typeof THREE === 'undefined') return;
+
+      /* Under reduced motion the section keeps its heading; the WebGL layer
+         is decoration and simply does not run. */
+      if (env.reduced) { canvas.style.display = 'none'; return; }
+
+      var scene = new THREE.Scene();
+      var getW = function () { return container.clientWidth || window.innerWidth; };
+      var getH = function () { return container.clientHeight || window.innerHeight; };
+
+      var camera = new THREE.PerspectiveCamera(45, getW() / getH(), 0.1, 100);
+      camera.position.set(0, 0, 7);
+
+      var renderer = new THREE.WebGLRenderer({
+        canvas: canvas, alpha: true, antialias: !env.mobile, powerPreference: 'high-performance'
+      });
+      renderer.setSize(getW(), getH());
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, env.mobile ? 1.5 : 2));
+
+      var meshGroup = new THREE.Group();
+      var segments = env.mobile ? 96 : 128;
+      var geometry = new THREE.TorusKnotGeometry(1.6, 0.45, segments, 32);
+
+      meshGroup.add(new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+        color: 0x0a0c10, metalness: 0.85, roughness: 0.25
+      })));
+      meshGroup.add(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+        color: 0xe0ff00, wireframe: true, transparent: true, opacity: 0.4
+      })));
+      scene.add(meshGroup);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      var keyLight = new THREE.DirectionalLight(0xe0ff00, 1.8);
+      keyLight.position.set(5, 5, 5);
+      scene.add(keyLight);
+      var fillLight = new THREE.PointLight(0x00f0ff, 2.0, 50);
+      fillLight.position.set(-5, -3, 3);
+      scene.add(fillLight);
+
+      var scrub = { rotX: -0.4, rotY: -0.8, rotZ: -0.2, camZ: 8.5, posY: -0.6 };
+
+      gsap.timeline({
+        scrollTrigger: {
+          trigger: container, start: 'top bottom', end: 'bottom top', scrub: 1.2
+        }
+      }).fromTo(scrub,
+        { rotX: -0.4, rotY: -0.8, rotZ: -0.2, camZ: 8.5, posY: -0.6 },
+        { rotX: Math.PI * 2.2, rotY: Math.PI * 3.4, rotZ: Math.PI * 1.2,
+          camZ: 5.4, posY: 0.6, ease: 'none' });
+
+      var overlay = container.querySelector('.scene-3d-overlay');
+      if (overlay) {
+        gsap.timeline({
+          scrollTrigger: { trigger: container, start: 'top 55%', end: 'bottom 45%', scrub: 1 }
+        })
+          .fromTo(overlay, { opacity: 0 }, { opacity: 1, ease: 'power2.out', duration: 1 })
+          .to(overlay, { opacity: 0, ease: 'power2.in', duration: 0.8 });
+      }
+
+      /* Only render while the section is actually on screen */
+      var inView = false;
+      var rafId = null;
+      var idleX = 0, idleY = 0;
+
+      function render() {
+        rafId = requestAnimationFrame(render);
+        idleX += 0.0015;
+        idleY += 0.0025;
+        meshGroup.rotation.x = scrub.rotX + idleX;
+        meshGroup.rotation.y = scrub.rotY + idleY;
+        meshGroup.rotation.z = scrub.rotZ;
+        meshGroup.position.y = scrub.posY;
+        camera.position.z = scrub.camZ;
+        renderer.render(scene, camera);
+      }
+
+      function play() { if (!rafId && !document.hidden) render(); }
+      function pause() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
+
+      ScrollTrigger.create({
+        trigger: container,
+        start: 'top bottom',
+        end: 'bottom top',
+        onToggle: function (self) { inView = self.isActive; inView ? play() : pause(); }
+      });
+
+      document.addEventListener('visibilitychange', function () {
+        document.hidden ? pause() : (inView && play());
+      });
+
+      window.addEventListener('resize', function () {
+        camera.aspect = getW() / getH();
+        camera.updateProjectionMatrix();
+        renderer.setSize(getW(), getH());
+      }, { passive: true });
+
+      play();
+    }
+
+    initThreeScene();
+
+    /* ─── 8. PROJECTS: 3D CIRCULAR GALLERY ─────────────────────────────── */
+
+    var PROJECTS_DATA = [
+      { num: '01 / 06', title: 'SMART WEB PENTESTING',      github: 'https://github.com/ponram06' },
+      { num: '02 / 06', title: 'SKILLBRIDGE',               github: 'https://github.com/ponram06' },
+      { num: '03 / 06', title: 'NAVILENS AR',               github: 'https://github.com/ponram06' },
+      { num: '04 / 06', title: 'VAXI-TRACK',                github: 'https://github.com/ponram06' },
+      { num: '05 / 06', title: 'AI CATTLE RECOGNITION',     github: 'https://github.com/ponram06' },
+      { num: '06 / 06', title: 'INTERACTIVE ARCHITECTURES', github: 'https://github.com/ponram06' }
+    ];
+
+    /* The orbit is a desktop, pointer-driven experience. On phones and under
+       reduced motion the same six projects render as a plain list — before
+       this, the section was 600vh of empty space on mobile. */
+    /* Captured before the orbit slices the <img> elements away, so the list
+       can still be built later if the viewport crosses the breakpoint. */
+    var CG_SOURCES = [];
+
+    function renderStaticGallery(section) {
+      if (section.querySelector('.cg-static-list')) return;
+
+      var sources = CG_SOURCES;
+
+      var list = document.createElement('div');
+      list.className = 'cg-static-list';
+
+      PROJECTS_DATA.forEach(function (p, i) {
+        var src = sources[i] || { src: '', alt: '' };
+        var card = document.createElement('a');
+        card.className = 'cg-static-card';
+        card.href = p.github;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+
+        var media = document.createElement('span');
+        media.className = 'cg-static-media';
+        if (src.src) {
+          var img = document.createElement('img');
+          img.src = src.src;
+          img.alt = src.alt;
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          media.appendChild(img);
+        }
+
+        var body = document.createElement('span');
+        body.className = 'cg-static-body';
+        body.innerHTML =
+          '<span class="cg-static-num"></span>' +
+          '<span class="cg-static-title"></span>' +
+          '<span class="cg-static-cta">VIEW PROJECT <span>&rarr;</span></span>';
+        body.querySelector('.cg-static-num').textContent = p.num;
+        body.querySelector('.cg-static-title').textContent = p.title;
+
+        card.appendChild(media);
+        card.appendChild(body);
+        list.appendChild(card);
+      });
+
+      section.querySelector('.circle-gallery-pin').appendChild(list);
+
+      if (PM && !env.reduced) {
+        PM.revealGroup(list, '.cg-static-card', { y: 30, stagger: 0.08 });
+      }
+    }
+
+    var cgOrbit = null; // { st, ticker } once the desktop orbit is built
+
+    function initCircleGallery() {
+      var cgSection = document.getElementById('Projects');
+      if (!cgSection) return;
+
+      CG_SOURCES = Array.prototype.map.call(
+        cgSection.querySelectorAll('img.cg-img'),
+        function (img) { return { src: img.getAttribute('src'), alt: img.getAttribute('alt') || '' }; }
+      );
+
+      if (env.reduced || env.mobile) {
+        renderStaticGallery(cgSection);
+        return;
+      }
+
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+
+      /* Slice each cover into cylindrical strips so it bends around the orbit */
+      (function buildSlices() {
+        var SLICES = 10;
+        var imgW = Math.min(Math.max(130, vw * 0.15), 210);
+        var imgH = imgW * 2 / 3;
+        var orbitR = (vw * 0.38 + 520) / 2;
+        var cylR = orbitR;
+        var sliceW = imgW / SLICES;
+        var stepDeg = (imgW / orbitR) * 180 / Math.PI / SLICES;
+
+        cgSection.querySelectorAll('.cg-img').forEach(function (img) {
+          if (img.tagName !== 'IMG') return; // never double-slice
+          var src = img.getAttribute('src');
+          var wrapper = document.createElement('div');
+          wrapper.className = 'cg-img';
+
+          for (var s = 0; s < SLICES; s++) {
+            var sl = document.createElement('div');
+            sl.className = 'cg-slice';
+            var displayW = sliceW + 1.5;
+            sl.style.width = displayW.toFixed(1) + 'px';
+            sl.style.left = '50%';
+            sl.style.marginLeft = (-displayW / 2).toFixed(1) + 'px';
+            sl.style.backgroundImage = 'url("' + src + '")';
+            sl.style.backgroundSize = imgW.toFixed(1) + 'px ' + imgH.toFixed(1) + 'px';
+            sl.style.backgroundPosition = (-s * sliceW).toFixed(1) + 'px 0';
+            sl.style.transformOrigin = '50% 50% ' + (-cylR).toFixed(1) + 'px';
+            sl.style.transform = 'rotateY(' +
+              ((s - (SLICES - 1) / 2) * stepDeg).toFixed(2) + 'deg)';
+            wrapper.appendChild(sl);
+          }
+          img.parentNode.replaceChild(wrapper, img);
+        });
+      })();
+
+      var cgImgs = gsap.utils.toArray(cgSection.querySelectorAll('.cg-img'));
+      var cgPhrase = cgSection.querySelector('#cg-phrase');
+      var cgCenterUI = cgSection.querySelector('#cg-center-ui');
+      var cgCounter = cgSection.querySelector('#cg-counter');
+      var cgTitle = cgSection.querySelector('#cg-title');
+      var cgBtn = cgSection.querySelector('#cg-btn');
+      var pinEl = cgSection.querySelector('.circle-gallery-pin') || cgSection;
+      var count = cgImgs.length;
+
+      if (pinEl) pinEl.setAttribute('data-cursor-label', 'SCROLL');
+
+      /* Wrap the intro phrase's words for the blur-to-sharp cascade */
+      (function wrapWords(el) {
+        if (!el) return;
+        var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (node) {
+          var frag = document.createDocumentFragment();
+          node.textContent.split(/(\s+)/).forEach(function (w) {
+            if (/^\s+$/.test(w)) frag.appendChild(document.createTextNode(w));
+            else if (w) {
+              var span = document.createElement('span');
+              span.className = 'word';
+              span.textContent = w;
+              frag.appendChild(span);
+            }
+          });
+          node.parentNode.replaceChild(frag, node);
+        });
+      })(cgPhrase);
+
+      var cgPhraseWords = cgPhrase
+        ? gsap.utils.toArray(cgPhrase.querySelectorAll('.word')) : [];
+
+      /* Orbit geometry, clamped so no card can ever cross a viewport edge */
+      var cardW = Math.min(Math.max(120, vw * 0.095), 175);
+      var cardH = cardW * 2 / 3;
+      var rx = Math.max(140, Math.min((vw / 2) - cardW / 2 - 55, vw * 0.32));
+      var tiltY = Math.max(50, Math.min((vh / 2) - cardH / 2 - 45 - 140, vh * 0.22));
+      var rz = Math.min(420, rx * 0.85);
+      var entryAngle = Math.PI / 2;
+
+      function getPosForAngle(angle) {
+        var x = Math.cos(angle) * rx;
+        var z = Math.sin(angle) * rz;
+        var rotYDeg = Math.max(-12, Math.min(12, (x / rx) * -10));
+        /* Push cards clear of the centre column so they never sit on the text */
+        var centerFactor = 1 - Math.min(1, Math.abs(x) / 300);
+        var clearance = (z >= 0 ? 145 : -145) * centerFactor;
+        return { x: x, y: (z / rz) * tiltY + clearance, z: z, rotYDeg: rotYDeg };
+      }
+
+      var currentActiveIdx = -999;
+
+      function renderCenterUI(idx) {
+        if (!cgCenterUI) return;
+        var p = PROJECTS_DATA[idx];
+        if (!p) return;
+
+        gsap.timeline()
+          .to(cgCenterUI, {
+            opacity: 0, y: 14, filter: 'blur(6px)', duration: 0.2, ease: 'power2.in',
+            onComplete: function () {
+              if (cgCounter) cgCounter.textContent = p.num;
+              if (cgTitle) cgTitle.textContent = p.title;
+              if (cgBtn) { cgBtn.href = p.github; cgBtn.style.display = 'inline-flex'; }
+            }
+          })
+          .to(cgCenterUI, {
+            opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.35, ease: 'power3.out'
+          });
+      }
+
+      /* Lerp the orbit so it glides rather than tracking the wheel 1:1 */
+      var cgTarget = 0;
+      var cgSmooth = 0;
+
+      function renderOrbit(progress) {
+        var isIntro = progress <= 0.10;
+        var isEnding = progress >= 0.85;
+        var isGallery = !isIntro && !isEnding;
+
         if (isIntro || isEnding) {
-          const modeP = isIntro ? Math.max(0, Math.min(1, progress / 0.10)) : Math.max(0, Math.min(1, (progress - 0.85) / 0.15));
+          var modeP = isIntro
+            ? gsap.utils.clamp(0, 1, progress / 0.10)
+            : gsap.utils.clamp(0, 1, (progress - 0.85) / 0.15);
+
           if (cgPhrase) {
-            let alpha = 1;
-            if (isIntro) alpha = modeP < 0.2 ? modeP / 0.2 : (modeP > 0.8 ? (1 - modeP) / 0.2 : 1);
-            else alpha = modeP < 0.2 ? modeP / 0.2 : 1;
+            var alpha = isIntro
+              ? (modeP < 0.2 ? modeP / 0.2 : (modeP > 0.8 ? (1 - modeP) / 0.2 : 1))
+              : (modeP < 0.2 ? modeP / 0.2 : 1);
             cgPhrase.style.opacity = alpha;
             cgPhrase.style.transform = 'translateY(' + (40 * (0.5 - modeP)).toFixed(1) + 'px)';
           }
-
-          cgPhraseWords.forEach(function (w) {
-            w.style.opacity = '1';
-            w.style.filter = 'blur(0px)';
+          /* Words cascade in with the phrase rather than snapping visible */
+          cgPhraseWords.forEach(function (w, i) {
+            var wp = gsap.utils.clamp(0, 1, (modeP - i * 0.02) / 0.35);
+            w.style.opacity = wp;
+            w.style.filter = 'blur(' + ((1 - wp) * 6).toFixed(2) + 'px)';
           });
 
           if (cgCenterUI) {
@@ -1108,56 +1052,114 @@ document.addEventListener("DOMContentLoaded", () => {
           currentActiveIdx = -999;
         } else {
           if (cgPhrase) cgPhrase.style.opacity = '0';
+          if (cgCenterUI) cgCenterUI.style.pointerEvents = 'auto';
         }
 
-        // 2. Determine Active Project Index during Gallery Phase (Clamped 0 to 5)
-        let activeIdx = -1;
+        var activeIdx = -1;
         if (isGallery) {
-          const galleryP = Math.max(0, Math.min(1, (progress - 0.10) / 0.75));
+          var galleryP = gsap.utils.clamp(0, 1, (progress - 0.10) / 0.75);
           activeIdx = Math.min(count - 1, Math.max(0, Math.floor(galleryP * count)));
         }
 
-        // 3. Position ALL 6 3D Project Cards around the continuous orbit
-        // All 6 cards remain on-screen in 3D orbit at all times with subtle perspective tilt (-9° to +9°)
         cgImgs.forEach(function (img, i) {
-          const baseAngle = entryAngle - (i / count) * Math.PI * 2;
-          const cardAngle = baseAngle - progress * Math.PI * 2.2;
-          const pos = getPosForAngle(cardAngle);
+          var angle = (entryAngle - (i / count) * Math.PI * 2) - progress * Math.PI * 2.2;
+          var pos = getPosForAngle(angle);
 
           if (i === activeIdx && isGallery) {
-            // Active front card: sharp, bright, upright facing front
             img.style.transform =
-              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + (pos.z + 40).toFixed(1) + 'px)' +
-              ' rotateY(' + pos.rotYDeg.toFixed(1) + 'deg) scale(1.14)';
+              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' +
+              (pos.z + 40).toFixed(1) + 'px) rotateY(' + pos.rotYDeg.toFixed(1) + 'deg) scale(1.14)';
             img.style.opacity = '1';
             img.style.filter = 'blur(0px) brightness(1.2)';
             img.style.zIndex = Math.round(pos.z + 1000);
           } else {
-            // Background & side cards: smaller, dimmer, subtle 3D tilt (ALWAYS VISIBLE & UPRIGHT)
-            let alpha = 0.75;
-            if (pos.z < -200) alpha = 0.45;
-
             img.style.transform =
-              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' + pos.z.toFixed(1) + 'px)' +
-              ' rotateY(' + pos.rotYDeg.toFixed(1) + 'deg) scale(0.84)';
-            img.style.opacity = alpha.toFixed(2);
+              'translate3d(' + pos.x.toFixed(1) + 'px,' + pos.y.toFixed(1) + 'px,' +
+              pos.z.toFixed(1) + 'px) rotateY(' + pos.rotYDeg.toFixed(1) + 'deg) scale(0.84)';
+            img.style.opacity = (pos.z < -200 ? 0.45 : 0.75).toFixed(2);
             img.style.filter = 'blur(1.5px) brightness(0.72)';
             img.style.zIndex = Math.round(pos.z + 200);
           }
         });
 
-        // 4. Update floating center typography when active project changes
         if (isGallery && activeIdx !== -1 && activeIdx !== currentActiveIdx) {
           currentActiveIdx = activeIdx;
           renderCenterUI(activeIdx);
         }
       }
-    });
-  }
 
-  initCircleGallery();
-  // ──────────────────────────────────────────────────────────────────────────
+      var orbitTicker = function () {
+        var diff = cgTarget - cgSmooth;
+        cgSmooth = Math.abs(diff) > 0.00005 ? cgSmooth + diff * 0.1 : cgTarget;
+        renderOrbit(cgSmooth);
+      };
+      gsap.ticker.add(orbitTicker);
 
-});
+      var orbitST = ScrollTrigger.create({
+        trigger: cgSection,
+        start: 'top top',
+        end: 'bottom bottom',
+        pin: pinEl,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        /* Lower than the hero's, so the hero's pin-spacer is measured first
+           and this section's start reflects the real document height. */
+        refreshPriority: 5,
+        onUpdate: function (self) { cgTarget = self.progress; }
+      });
 
+      cgOrbit = { st: orbitST, ticker: orbitTicker, section: cgSection };
+      renderOrbit(0);
+    }
 
+    initCircleGallery();
+
+    /* Crossing the mobile breakpoint swaps the orbit for the list. Done in
+       place — no reload, and the orbit's pin/ticker are released first so it
+       cannot keep writing transforms to hidden nodes. */
+    var wasStatic = env.reduced || env.mobile;
+    var cgResizeTimer = null;
+
+    window.addEventListener('resize', function () {
+      clearTimeout(cgResizeTimer);
+      cgResizeTimer = setTimeout(function () {
+        var isStatic = env.reduced || env.mobile;
+        if (isStatic === wasStatic) return;
+        wasStatic = isStatic;
+
+        var section = document.getElementById('Projects');
+        if (!section) return;
+
+        if (isStatic) {
+          if (cgOrbit) {
+            gsap.ticker.remove(cgOrbit.ticker);
+            cgOrbit.st.kill(true);
+            cgOrbit = null;
+          }
+          renderStaticGallery(section);
+        } else if (!cgOrbit) {
+          /* Back to desktop: the orbit needs the original <img> nodes, which
+             the slicer consumed. Rebuild them from the captured sources. */
+          var list = section.querySelector('.cg-static-list');
+          if (list) list.remove();
+          if (!section.querySelector('.cg-img')) {
+            var pin = section.querySelector('.circle-gallery-pin');
+            var phrase = section.querySelector('#cg-phrase');
+            CG_SOURCES.forEach(function (s) {
+              var img = document.createElement('img');
+              img.className = 'cg-img';
+              img.src = s.src;
+              img.alt = s.alt;
+              img.width = 1200;
+              img.height = 800;
+              pin.insertBefore(img, phrase);
+            });
+          }
+          initCircleGallery();
+        }
+        if (PM) PM.refresh();
+      }, 400);
+    }, { passive: true });
+
+  });
+})();
